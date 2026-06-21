@@ -1,0 +1,218 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+@layer base {
+  /* ============================================================
+     TEMA CLARO PROFISSIONAL — Favorito Supermercado Coxim
+     Hierarquia: Navy (confiança/marca) + Dourado (CTA) + Vermelho (apenas promo)
+     Inspirado em padrões de varejo de alimentos modernos
+     ============================================================ */
+  :root {
+    /* Background: off-white quente — limpeza sem ser "branco hospital" */
+    --background: 60 14% 98%;
+    --foreground: 215 28% 17%;
+
+    /* Cards: branco puro com sombra sutil */
+    --card: 0 0% 100%;
+    --card-foreground: 215 28% 17%;
+
+    --popover: 0 0% 100%;
+    --popover-foreground: 215 28% 17%;
+
+    /* Primary = navy da marca (#1a3a6e) — confiança, tradição */
+    --primary: 212 62% 27%;
+    --primary-foreground: 60 14% 98%;
+
+    /* Secondary = vermelho promocional (#cc0000) — usar APENAS para promo/oferta */
+    --secondary: 0 100% 40%;
+    --secondary-foreground: 0 0% 100%;
+
+    /* Muted = cinza neutro */
+    --muted: 220 14% 96%;
+    --muted-foreground: 215 14% 42%;
+
+    /* Accent = dourado quente sóbrio — CTA "Adicionar", destaques amigáveis */
+    --accent: 38 65% 45%;
+    --accent-foreground: 0 0% 100%;
+
+    /* Destructive — vermelho de alerta, distinto da promo */
+    --destructive: 0 75% 50%;
+    --destructive-foreground: 0 0% 100%;
+
+    --border: 220 13% 90%;
+    --input: 220 13% 90%;
+    --ring: 212 62% 27%;
+
+    --radius: 0.75rem;
+
+    /* === Painel Admin (mantém escuro para distinguir do app cliente) === */
+    --sidebar-background: 215 30% 14%;
+    --sidebar-foreground: 60 14% 95%;
+    --sidebar-primary: 38 65% 50%;
+    --sidebar-primary-foreground: 215 30% 14%;
+    --sidebar-accent: 215 25% 22%;
+    --sidebar-accent-foreground: 60 14% 95%;
+    --sidebar-border: 215 25% 26%;
+    --sidebar-ring: 38 65% 50%;
+
+    /* === Tokens diretos da marca (uso pontual: encartes, preços, recibos) === */
+    --brand-navy: 212 62% 27%;   /* #1a3a6e */
+    --brand-gold: 51 100% 50%;   /* #ffd700 — amarelo puro só para encartes promocionais */
+    --brand-red:  0 100% 40%;    /* #cc0000 */
+
+    /* Aliases legados — agora consistentes com tema claro */
+    --market-blue: 212 62% 27%;
+    --market-red: 0 100% 40%;
+    --market-dark-blue: 215 28% 17%;
+    --market-light-blue: 212 50% 92%;
+    --market-yellow: 38 65% 45%;
+  }
+
+  /* Tema escuro opcional — apenas para usuários que ativam dark mode no SO/app.
+     O default permanece claro. */
+  .dark {
+    --background: 215 30% 10%;
+    --foreground: 60 14% 95%;
+    --card: 215 28% 14%;
+    --card-foreground: 60 14% 95%;
+    --popover: 215 28% 14%;
+    --popover-foreground: 60 14% 95%;
+    --primary: 212 70% 60%;
+    --primary-foreground: 215 30% 10%;
+    --secondary: 0 80% 50%;
+    --secondary-foreground: 0 0% 100%;
+    --muted: 215 25% 20%;
+    --muted-foreground: 215 14% 70%;
+    --accent: 38 70% 55%;
+    --accent-foreground: 215 30% 10%;
+    --destructive: 0 75% 55%;
+    --destructive-foreground: 0 0% 100%;
+    --border: 215 25% 24%;
+    --input: 215 25% 22%;
+    --ring: 38 70% 55%;
+    --sidebar-background: 215 30% 8%;
+    --sidebar-foreground: 60 14% 95%;
+    --sidebar-primary: 38 70% 55%;
+    --sidebar-primary-foreground: 215 30% 8%;
+    --sidebar-accent: 215 25% 16%;
+    --sidebar-accent-foreground: 60 14% 95%;
+    --sidebar-border: 215 25% 20%;
+    --sidebar-ring: 38 70% 55%;
+  }
+}
+
+@layer base {
+  * {
+    @apply border-border;
+  }
+
+  html {
+    color-scheme: light;
+  }
+  html.dark {
+    color-scheme: dark;
+  }
+
+  html,
+  body {
+    height: 100%;
+    width: 100%;
+    overflow-x: hidden;
+  }
+
+  body {
+    @apply bg-background text-foreground;
+    font-family: 'Inter', system-ui, -apple-system, sans-serif;
+    /* Safe area lateral para celulares com bordas/landscape; topo/base
+       são tratados pelas próprias <header sticky> e <nav fixed bottom>
+       — body padding não funciona com position:sticky/fixed. */
+    padding-left: env(safe-area-inset-left);
+    padding-right: env(safe-area-inset-right);
+    /* Melhora rolagem no WebView nativo */
+    -webkit-overflow-scrolling: touch;
+    /* Brisa sutil de cor — quase imperceptível, dá calor sem distrair */
+    background-image:
+      radial-gradient(ellipse 70% 40% at 50% -10%, hsl(var(--primary) / 0.04), transparent 60%);
+    background-attachment: fixed;
+  }
+}
+
+/* ============================================================
+   SAFE AREA — iOS notch / Android status bar / home indicator
+   Headers grudados no topo precisam de padding-top dinâmico
+   porque position:sticky ancora ao viewport, não ao body.
+   ============================================================ */
+@layer base {
+  header.sticky {
+    padding-top: env(safe-area-inset-top);
+  }
+}
+
+@layer utilities {
+  .pt-safe {
+    padding-top: env(safe-area-inset-top);
+  }
+  .pb-safe {
+    padding-bottom: env(safe-area-inset-bottom);
+  }
+  .min-h-screen-safe {
+    min-height: calc(100vh - env(safe-area-inset-top) - env(safe-area-inset-bottom));
+  }
+}
+
+/* Custom scrollbar (dark) */
+::-webkit-scrollbar {
+  width: 8px;
+  height: 8px;
+}
+
+::-webkit-scrollbar-track {
+  background: transparent;
+}
+
+::-webkit-scrollbar-thumb {
+  background: hsl(var(--muted-foreground) / 0.25);
+  border-radius: 4px;
+}
+
+::-webkit-scrollbar-thumb:hover {
+  background: hsl(var(--primary) / 0.5);
+}
+
+/* ============================================================
+   ELEVAÇÃO: sombras profissionais para hover/seleção
+   (substitui o glow chamativo por shadows sutis padrão e-commerce)
+   ============================================================ */
+@layer utilities {
+  /* Hover suave em qualquer card clicável */
+  .glow-card {
+    transition: box-shadow 0.2s ease, transform 0.18s ease, border-color 0.2s ease;
+  }
+  .glow-card:hover {
+    border-color: hsl(var(--primary) / 0.25);
+    box-shadow:
+      0 1px 2px 0 hsl(215 28% 17% / 0.04),
+      0 8px 24px -6px hsl(215 28% 17% / 0.10);
+    transform: translateY(-1px);
+  }
+
+  /* Estado "selecionado" — borda destacada sem animação */
+  .glow-card-active {
+    border-color: hsl(var(--accent)) !important;
+    box-shadow:
+      0 0 0 2px hsl(var(--accent) / 0.18),
+      0 6px 16px -6px hsl(var(--accent) / 0.25);
+  }
+
+  /* Realce para preço promocional / badge "OFERTA" */
+  .glow-red {
+    box-shadow: 0 2px 8px -2px hsl(var(--brand-red) / 0.35);
+  }
+
+  /* Texto da marca: legibilidade primeiro, sem text-shadow */
+  .text-glow-gold {
+    color: hsl(var(--accent));
+    font-weight: 700;
+  }
+}

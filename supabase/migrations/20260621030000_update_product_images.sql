@@ -1,0 +1,21 @@
+-- Atualiza URLs das imagens dos produtos para as fotos reais do cardápio
+UPDATE public.products SET image = '/produtos/milho.jpg'          WHERE id = 'prd-milho';
+UPDATE public.products SET image = '/produtos/pamonha.jpg'        WHERE id = 'prd-pamonha';
+UPDATE public.products SET image = '/produtos/canjica.jpg'        WHERE id = 'prd-canjica';
+UPDATE public.products SET image = '/produtos/mugunza.jpg'        WHERE id = 'prd-mugunza';
+UPDATE public.products SET image = '/produtos/bolo-milho.jpg'     WHERE id = 'prd-bolo-milho';
+UPDATE public.products SET image = '/produtos/bolo-macaxeira.jpg' WHERE id = 'prd-bolo-maca';
+UPDATE public.products SET image = '/produtos/arroz-doce.jpg'     WHERE id = 'prd-arroz-doce';
+UPDATE public.products SET image = '/produtos/cachorro-quente.jpg' WHERE id = 'prd-cachorro';
+UPDATE public.products SET image = '/produtos/algodao-doce.jpg'   WHERE id = 'prd-algodao';
+UPDATE public.products SET image = '/produtos/pipoca.jpg'         WHERE id = 'prd-pipoca';
+UPDATE public.products SET image = '/produtos/caldo.jpg'          WHERE id = 'prd-caldo';
+UPDATE public.products SET image = '/produtos/crepe.jpg'          WHERE id = 'prd-crepe';
+UPDATE public.products SET image = '/produtos/batata.jpg'         WHERE id = 'prd-batata';
+UPDATE public.products SET image = '/produtos/espetinho.jpg'      WHERE id = 'prd-espetinho';
+UPDATE public.products SET image = '/produtos/budweiser.jpg'      WHERE id = 'prd-budweiser';
+UPDATE public.products SET image = '/produtos/brahma-skol.jpg'    WHERE id = 'prd-brahma-skol';
+UPDATE public.products SET image = '/produtos/refri-200.jpg'      WHERE id = 'prd-refri-200';
+UPDATE public.products SET image = '/produtos/coca-350.jpg'       WHERE id = 'prd-coca-350';
+UPDATE public.products SET image = '/produtos/agua.jpg'           WHERE id = 'prd-agua';
+UPDATE public.products SET image = '/produtos/pulseira.svg'       WHERE id = 'prd-pulseira';

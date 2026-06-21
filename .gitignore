@@ -1,0 +1,36 @@
+# Dependencies
+node_modules/
+
+# Build outputs
+dist/
+dist-ssr/
+
+# Environment variables (nunca commitar)
+.env
+.env.local
+.env.*.local
+
+# Editor directories and files
+.idea/
+.vscode/
+*.swp
+*.swo
+
+# OS files
+.DS_Store
+Thumbs.db
+
+# Logs
+*.log
+npm-debug.log*
+
+# Local development
+*.local
+
+# Supabase (se usar CLI localmente)
+.supabase/
+
+# Capacitor
+ios/App/Pods/
+ios/App/build/
+android/app/build/
