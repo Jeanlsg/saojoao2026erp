@@ -9,6 +9,7 @@ import { CartProvider } from "@/contexts/CartContext";
 import { AuthProvider } from "@/contexts/AuthContext";
 import { AdminProvider } from "@/contexts/AdminContext";
 import { ProtectedRoute } from "@/components/auth/ProtectedRoute";
+import { MesaProtectedRoute } from "@/components/auth/MesaProtectedRoute";
 import { CartDrawer } from "@/components/store/CartDrawer";
 import { useNotificationTapHandler } from "@/hooks/useNotificationTapHandler";
 import { useNativeThemeSync } from "@/hooks/useNativeThemeSync";
@@ -20,6 +21,8 @@ import EntregaConfirmar from "./pages/EntregaConfirmar";
 import { AdminLayout } from "@/components/admin/AdminLayout";
 
 // Páginas de usuário (clientes)
+const SelecionarMesa = lazy(() => import("./pages/store/SelecionarMesa"));
+const LoginEntregador = lazy(() => import("./pages/store/LoginEntregador"));
 const Login = lazy(() => import("./pages/store/Login"));
 const VerifyEmail = lazy(() => import("./pages/store/VerifyEmail"));
 const ForgotPassword = lazy(() => import("./pages/store/ForgotPassword"));
@@ -34,7 +37,7 @@ const TermsOfService = lazy(() => import("./pages/TermsOfService"));
 const PrivacyPolicy = lazy(() => import("./pages/PrivacyPolicy"));
 
 // Páginas de admin
-const AdminLogin = lazy(() => import("./pages/admin/AdminLogin"));
+const LoginAdmin = lazy(() => import("./pages/admin/LoginAdmin"));
 const Dashboard = lazy(() => import("./pages/admin/Dashboard"));
 const PDV = lazy(() => import("./pages/admin/PDV"));
 const Products = lazy(() => import("./pages/admin/Products"));
@@ -97,23 +100,27 @@ const App = () => (
               <RouterBootstrap />
               <Suspense fallback={<PageLoader />}>
                 <Routes>
-                  {/* Rotas públicas da loja (clientes) */}
-                  <Route path="/" element={<Index />} />
+                  {/* Tela inicial: selecionar mesa */}
+                  <Route path="/selecionar-mesa" element={<SelecionarMesa />} />
+
+                  {/* Rotas públicas da loja (clientes) - protegidas por mesa */}
+                  <Route path="/" element={<MesaProtectedRoute><Index /></MesaProtectedRoute>} />
                   <Route path="/login" element={<Login />} />
                   <Route path="/verify-email" element={<VerifyEmail />} />
                   <Route path="/forgot-password" element={<ForgotPassword />} />
                   <Route path="/reset-password" element={<ResetPassword />} />
-                  <Route path="/localizacao" element={<StoreLocation />} />
-                  <Route path="/ofertas" element={<Ofertas />} />
-                  <Route path="/meus-pedidos" element={<ProtectedRoute><MyOrders /></ProtectedRoute>} />
+                  <Route path="/localizacao" element={<MesaProtectedRoute><StoreLocation /></MesaProtectedRoute>} />
+                  <Route path="/ofertas" element={<MesaProtectedRoute><Ofertas /></MesaProtectedRoute>} />
+                  <Route path="/meus-pedidos" element={<MesaProtectedRoute><MyOrders /></MesaProtectedRoute>} />
                   <Route path="/perfil" element={<ProtectedRoute><Profile /></ProtectedRoute>} />
                   <Route path="/pedido/:orderId" element={<PedidoConfirmado />} />
                   <Route path="/entrega/:orderId" element={<EntregaConfirmar />} />
                   <Route path="/termos" element={<TermsOfService />} />
                   <Route path="/privacidade" element={<PrivacyPolicy />} />
 
-                  {/* Login de admin (rota pública isolada) */}
-                  <Route path="/admin/login" element={<AdminLogin />} />
+                  {/* Login de admin/entregadores (rota pública isolada) */}
+                  <Route path="/admin/login" element={<LoginAdmin />} />
+                  <Route path="/entregador/login" element={<LoginEntregador />} />
 
                   {/* Área de entregas (full-screen, sem AdminLayout) - apenas entregadores */}
                   <Route path="/admin/entregas" element={<Entregas />} />

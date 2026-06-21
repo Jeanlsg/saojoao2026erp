@@ -157,14 +157,35 @@ export default function Entregadores() {
         fetchData();
       }
     } else {
-      const { error } = await supabase.from("delivery_users").insert(data);
+      // Cria o entregador via Edge Function (gera email genérico automaticamente)
+      try {
+        const { data: fnData, error: fnError } = await supabase.functions.invoke(
+          "create-delivery-user",
+          {
+            body: {
+              name: formData.name.trim(),
+              phone: formData.phone.trim() || null,
+              pin: formData.pin || null,
+            },
+          }
+        );
 
-      if (error) {
-        toast({ title: "Erro ao criar", description: error.message, variant: "destructive" });
-      } else {
-        toast({ title: "Entregador criado!" });
+        if (fnError) throw fnError;
+        if (fnData?.error) throw new Error(fnData.error);
+
+        toast({
+          title: "✅ Entregador criado!",
+          description: `Email gerado: ${fnData.email}`,
+        });
         setDialogOpen(false);
         fetchData();
+      } catch (err: any) {
+        console.error("Error creating delivery user:", err);
+        toast({
+          title: "Erro ao criar",
+          description: err.message || "Não foi possível criar o entregador.",
+          variant: "destructive",
+        });
       }
     }
     setSaving(false);

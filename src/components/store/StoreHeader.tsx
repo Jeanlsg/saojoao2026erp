@@ -1,29 +1,22 @@
-import { Clock, MapPin, ShoppingCart, User, LogOut, Settings, Package, Sun, Moon } from "lucide-react";
+import { Clock, MapPin, ShoppingCart, User, LogOut, Settings, Package, Utensils, ShieldCheck, Sun, Moon } from "lucide-react";
 import { useCart } from "@/contexts/CartContext";
 import { useAuth } from "@/contexts/AuthContext";
+import { getMesaSession, clearMesaSession } from "@/lib/mesaSession";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
-import { useTheme } from "next-themes";
-import { useEffect, useState } from "react";
-import {
-  DropdownMenu,
-  DropdownMenuContent,
-  DropdownMenuItem,
-  DropdownMenuTrigger,
-  DropdownMenuSeparator,
-} from "@/components/ui/dropdown-menu";
 import { Link } from "react-router-dom";
-import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 
 export function StoreHeader() {
   const now = new Date();
   const hour = now.getHours();
   const isOpen = hour >= 7 && hour < 22;
   const { user, profile, isAdmin, signOut } = useAuth();
-  const { theme, setTheme } = useTheme();
-  const [mounted, setMounted] = useState(false);
-  useEffect(() => setMounted(true), []);
-  const isDark = mounted && theme === "dark";
+  const [mesa, setMesa] = useState(getMesaSession());
+
+  useEffect(() => {
+    const interval = setInterval(() => setMesa(getMesaSession()), 1000);
+    return () => clearInterval(interval);
+  }, []);
 
   return (
     <header className="sticky top-0 z-40 bg-card shadow-md">
@@ -55,11 +48,34 @@ export function StoreHeader() {
                 {isOpen ? "Aberto" : "Fechado"}
               </Badge>
             </div>
+            {mesa && (
+              <button
+                onClick={() => {
+                  if (confirm(`Deseja trocar a mesa ${mesa.numero}?`)) {
+                    clearMesaSession();
+                    window.location.href = "/selecionar-mesa";
+                  }
+                }}
+                className="mt-0.5 flex items-center gap-1 text-[10px] font-bold text-primary hover:text-primary/80 transition-colors"
+                title="Clique para trocar de mesa"
+              >
+                <Utensils className="h-2.5 w-2.5" />
+                <span>Mesa {mesa.numero} • {mesa.nome_cliente}</span>
+              </button>
+            )}
           </div>
         </div>
 
         {/* Actions - hidden on mobile (bottom nav handles it) */}
         <div className="hidden sm:flex items-center gap-2 shrink-0">
+          {!user && (
+            <Button variant="outline" size="sm" asChild className="gap-1">
+              <Link to="/admin/login">
+                <ShieldCheck className="h-3.5 w-3.5" />
+                Admin/Entregas
+              </Link>
+            </Button>
+          )}
           <ThemeToggle isDark={isDark} setTheme={setTheme} />
           {user ? (
             <DropdownMenu>
