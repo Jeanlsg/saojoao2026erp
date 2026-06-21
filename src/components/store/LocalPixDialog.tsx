@@ -42,7 +42,12 @@ export function LocalPixDialog({
 
   // Gera o QR Code PIX ao abrir o dialog
   useEffect(() => {
-    if (!open || !orderId) return;
+    if (!open) return;
+    if (!finalOrderId) {
+      // Limpa pixData se não tiver orderId
+      setPixData(null);
+      return;
+    }
     let cancelled = false;
 
     const generate = async () => {
@@ -50,16 +55,19 @@ export function LocalPixDialog({
         // Import dinâmico para evitar carregar a lib em outras telas
         const { generatePixPayload } = await import("@/lib/pix");
 
-        // Configuração padrão — virá do store_settings (configurável pelo admin depois)
+        // Chave PIX da Escola Raul Pompéia (telefone)
+        // Titular: Maria Lucilene de Souza Guimarães
+        // Formato: +55 (87) 98825-0204 → chave PIX telefone é apenas DDD+numero: 87988250204
+        // Limite de 25 chars do padrão EMV: usamos "MARIA L S GUIMARAES"
         const pixConfig = {
-          pixKey: "87999999999", // TODO: pegar do store_settings (chave PIX real)
-          merchantName: "Escola Raul Pompeia",
-          merchantCity: "Petrolina",
+          pixKey: "87988250204",
+          merchantName: "MARIA L S GUIMARAES",
+          merchantCity: "PETROLINA",
           cep: "56322-450",
         };
 
         // txid curto = primeiros 8 chars do id do pedido
-        const txid = orderId.replace(/-/g, "").substring(0, 8).toUpperCase();
+        const txid = finalOrderId.replace(/-/g, "").substring(0, 8).toUpperCase();
 
         const data = generatePixPayload(finalTotal, txid, pixConfig);
 

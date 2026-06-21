@@ -39,6 +39,8 @@ const Products = lazy(() => import("./pages/admin/Products"));
 const Categories = lazy(() => import("./pages/admin/Categories"));
 const Combos = lazy(() => import("./pages/admin/Combos"));
 const Orders = lazy(() => import("./pages/admin/Orders"));
+const Entregadores = lazy(() => import("./pages/admin/Entregadores"));
+const Entregas = lazy(() => import("./pages/admin/Entregas"));
 const Freight = lazy(() => import("./pages/admin/Freight"));
 const Discounts = lazy(() => import("./pages/admin/Discounts"));
 const Flyers = lazy(() => import("./pages/admin/Flyers"));
@@ -109,6 +111,9 @@ const App = () => (
                   {/* Login de admin (rota pública isolada) */}
                   <Route path="/admin/login" element={<AdminLogin />} />
 
+                  {/* Área de entregas (full-screen, sem AdminLayout) - apenas entregadores */}
+                  <Route path="/admin/entregas" element={<Entregas />} />
+
                   {/* Área administrativa — isolada do fluxo da loja.
                       O admin entra direto no PDV (Frente de Caixa) por padrão. */}
                   <Route
@@ -128,6 +133,7 @@ const App = () => (
                     <Route path="categorias" element={<Categories />} />
                     <Route path="combos" element={<Combos />} />
                     <Route path="pedidos" element={<Orders />} />
+                    <Route path="entregadores" element={<Entregadores />} />
                     <Route path="estoque" element={<Navigate to="/admin/produtos" replace />} />
                     <Route path="frete" element={<Freight />} />
                     <Route path="descontos" element={<Discounts />} />

@@ -62,6 +62,34 @@ function normalize(value: string, maxLength: number): string {
 }
 
 /**
+ * Normaliza a chave PIX para o formato aceito pelo padrão EMV.
+ * - CPF/CNPJ: apenas dígitos
+ * - Email: lowercase
+ * - Telefone: +55 + DDD + número
+ * - Chave aleatória: UUID
+ */
+function normalizePixKey(key: string): string {
+  const digits = key.replace(/\D/g, "");
+
+  // Telefone: 10 ou 11 dígitos (DDD + número) → prefixa +55
+  if (digits.length === 10 || digits.length === 11) {
+    // Se já começa com 55, mantém
+    if (digits.startsWith("55") && digits.length === 12) {
+      return `+${digits}`;
+    }
+    return `+55${digits}`;
+  }
+
+  // Email: lowercase
+  if (key.includes("@")) {
+    return key.toLowerCase();
+  }
+
+  // UUID/chave aleatória: mantém como está
+  return key;
+}
+
+/**
  * Gera o BR Code PIX dinâmico (com valor) para uma transação.
  *
  * @param amount Valor em reais (ex: 42.50)
@@ -75,7 +103,7 @@ export function generatePixPayload(
 ): PixPayload {
   // Monta payload base
   const gui = emvField("00", "br.gov.bcb.pix");
-  const key = emvField("01", config.pixKey);
+  const key = emvField("01", normalizePixKey(config.pixKey));
 
   // 26 = Merchant Account Information (obrigatório)
   const merchantAccount = emvField("26", gui + key);

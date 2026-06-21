@@ -1,4 +1,4 @@
-import { LayoutDashboard, Package, Tag, Flame, ShoppingCart, ArrowLeft, Truck, Percent, Newspaper, Settings, LogOut, Monitor } from "lucide-react";
+import { LayoutDashboard, Package, Tag, Flame, ShoppingCart, ArrowLeft, Truck, Percent, Newspaper, Settings, LogOut, Monitor, Users, PackageCheck } from "lucide-react";
 import { NavLink } from "@/components/NavLink";
 import { useLocation, Link, useNavigate } from "react-router-dom";
 import {
@@ -22,6 +22,8 @@ const items = [
   { title: "Categorias", url: "/admin/categorias", icon: Tag },
   { title: "Combos", url: "/admin/combos", icon: Flame },
   { title: "Pedidos", url: "/admin/pedidos", icon: ShoppingCart },
+  { title: "Entregas", url: "/admin/entregas", icon: PackageCheck },
+  { title: "Entregadores", url: "/admin/entregadores", icon: Users },
   { title: "Frete", url: "/admin/frete", icon: Truck },
   { title: "Descontos", url: "/admin/descontos", icon: Percent },
   { title: "Jornais", url: "/admin/jornais", icon: Newspaper },

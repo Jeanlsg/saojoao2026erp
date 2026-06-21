@@ -18,6 +18,7 @@ import {
   User,
   X,
   Printer,
+  CreditCard,
 } from "lucide-react";
 
 interface CartItem {
@@ -29,17 +30,18 @@ interface CartItem {
 }
 
 export default function PDV() {
-  const { products, categories, updateOrderPaid, loading: adminLoading } = useAdmin();
+  const { products, categories, loading: adminLoading } = useAdmin();
   const [cart, setCart] = useState<CartItem[]>([]);
   const [selectedCategory, setSelectedCategory] = useState<string>("all");
   const [customerName, setCustomerName] = useState("");
   const [pixDialogOpen, setPixDialogOpen] = useState(false);
   const [currentOrderId, setCurrentOrderId] = useState<string | null>(null);
-  const [paymentMethod, setPaymentMethod] = useState<"pix" | "dinheiro" | null>(null);
+  const [paymentMethod, setPaymentMethod] = useState<"pix" | "dinheiro" | "credito" | "debito" | null>(null);
   const [changeAmount, setChangeAmount] = useState("");
   const [lastSale, setLastSale] = useState<{ name: string; total: number } | null>(null);
   const [showChangeModal, setShowChangeModal] = useState(false);
   const [changeValue, setChangeValue] = useState(0);
+  const [showCardModal, setShowCardModal] = useState(false);
 
   const total = useMemo(
     () => cart.reduce((sum, item) => sum + item.price * item.quantity, 0),
@@ -108,10 +110,14 @@ export default function PDV() {
       price: item.price,
     }));
 
+    // Gera UUID para o id do pedido
+    const orderId = crypto.randomUUID();
+
     try {
       const { data: orderData, error: orderError } = await supabase
         .from("orders")
         .insert({
+          id: orderId,
           customer_name: customerName || "Balcão",
           customer_phone: null,
           items,
@@ -126,19 +132,21 @@ export default function PDV() {
 
       if (orderError) {
         console.error("[PDV] Erro ao criar pedido:", orderError);
+        alert(`Erro ao criar pedido: ${orderError.message}`);
         return;
       }
 
       setChangeValue(paidAmount - total);
       setShowChangeModal(true);
       setCurrentOrderId(orderData.id);
-      updateOrderPaid(orderData.id, true);
-    } catch (err) {
+      // O INSERT já criou o pedido com paid=true, trigger JÁ deu baixa no estoque
+    } catch (err: any) {
       console.error("[PDV] Erro ao finalizar venda:", err);
+      alert(`Erro: ${err?.message || "desconhecido"}`);
     }
   };
 
-  const finalizeSale = async () => {
+  const finalizeSale = async (method: "pix" | "dinheiro") => {
     if (cart.length === 0) return;
 
     const items = cart.map((item) => ({
@@ -148,51 +156,106 @@ export default function PDV() {
       price: item.price,
     }));
 
+    // Gera UUID para o id do pedido
+    const orderId = crypto.randomUUID();
+
     try {
       const { data: orderData, error: orderError } = await supabase
         .from("orders")
         .insert({
+          id: orderId,
           customer_name: customerName || "Balcão",
           customer_phone: null,
           items,
           total,
-          status: paymentMethod === "pix" ? "confirmado" : "pendente",
-          payment_method: paymentMethod === "pix" ? "pix" : "dinheiro",
-          paid: paymentMethod === "pix",
-          paid_at: paymentMethod === "pix" ? new Date().toISOString() : null,
+          status: method === "pix" ? "confirmado" : "pendente",
+          payment_method: method,
+          paid: method === "pix",
+          paid_at: method === "pix" ? new Date().toISOString() : null,
         })
         .select()
         .single();
 
       if (orderError) {
         console.error("[PDV] Erro ao criar pedido:", orderError);
+        alert(`Erro ao criar pedido: ${orderError.message}`);
         return;
       }
 
       setCurrentOrderId(orderData.id);
 
-      if (paymentMethod === "pix") {
+      if (method === "pix") {
         setPixDialogOpen(true);
       }
-    } catch (err) {
+    } catch (err: any) {
       console.error("[PDV] Erro ao finalizar venda:", err);
+      alert(`Erro: ${err?.message || "desconhecido"}`);
     }
   };
 
-  const handleCobrar = (method: "pix" | "dinheiro") => {
+  const handleCobrar = (method: "pix" | "dinheiro" | "credito" | "debito") => {
     if (cart.length === 0) return;
     setPaymentMethod(method);
     if (method === "dinheiro") {
       return;
     }
-    finalizeSale();
+    if (method === "credito" || method === "debito") {
+      setShowCardModal(true);
+      return;
+    }
+    finalizeSale(method);
+  };
+
+  const finalizeCardSale = async (cardType: "credito" | "debito") => {
+    if (cart.length === 0) return;
+
+    const items = cart.map((item) => ({
+      productId: item.productId,
+      productName: item.productName,
+      quantity: item.quantity,
+      price: item.price,
+    }));
+
+    const orderId = crypto.randomUUID();
+
+    try {
+      const { data: orderData, error: orderError } = await supabase
+        .from("orders")
+        .insert({
+          id: orderId,
+          customer_name: customerName || "Balcão",
+          customer_phone: null,
+          items,
+          total,
+          status: "confirmado",
+          payment_method: cardType,
+          paid: true,
+          paid_at: new Date().toISOString(),
+        })
+        .select()
+        .single();
+
+      if (orderError) {
+        console.error("[PDV] Erro ao criar pedido:", orderError);
+        alert(`Erro ao criar pedido: ${orderError.message}`);
+        return;
+      }
+
+      setLastSale({ name: customerName || "Balcão", total });
+      setShowCardModal(false);
+      setCart([]);
+      setCustomerName("");
+      setPaymentMethod(null);
+    } catch (err: any) {
+      console.error("[PDV] Erro ao finalizar venda:", err);
+      alert(`Erro: ${err?.message || "desconhecido"}`);
+    }
   };
 
   const handlePixConfirm = () => {
-    if (currentOrderId) {
-      updateOrderPaid(currentOrderId, true);
-      setLastSale({ name: customerName || "Balcão", total });
-    }
+    // O INSERT já criou o pedido com paid=true, então a trigger do banco
+    // JÁ deu baixa no estoque. Não precisa chamar updateOrderPaid.
+    setLastSale({ name: customerName || "Balcão", total });
     setPixDialogOpen(false);
     setCart([]);
     setCustomerName("");
@@ -436,6 +499,27 @@ export default function PDV() {
             </Button>
           </div>
 
+          <div className="grid grid-cols-2 gap-2">
+            <Button
+              variant="secondary"
+              className="gap-1"
+              onClick={() => handleCobrar("credito")}
+              disabled={cart.length === 0}
+            >
+              <CreditCard className="h-4 w-4" />
+              Crédito
+            </Button>
+            <Button
+              variant="secondary"
+              className="gap-1"
+              onClick={() => handleCobrar("debito")}
+              disabled={cart.length === 0}
+            >
+              <CreditCard className="h-4 w-4" />
+              Débito
+            </Button>
+          </div>
+
           {paymentMethod === "dinheiro" && parseFloat(changeAmount) >= total && (
             <Button className="w-full gap-1" onClick={handleDinheiroConfirm}>
               <Check className="h-4 w-4" />
@@ -486,6 +570,50 @@ export default function PDV() {
                 Novo
               </Button>
             </div>
+          </div>
+        </div>
+      )}
+
+      {/* Modal Cartão */}
+      {showCardModal && (
+        <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-50">
+          <div className="bg-card rounded-2xl p-6 w-80 text-center space-y-4">
+            <CreditCard className="h-12 w-12 mx-auto text-primary" />
+            <h2 className="text-xl font-bold">Pagamento com Cartão</h2>
+            <p className="text-2xl font-bold text-primary">
+              R$ {total.toFixed(2).replace(".", ",")}
+            </p>
+            <p className="text-sm text-muted-foreground">
+              Cliente: {customerName || "Balcão"}
+            </p>
+            <p className="text-xs text-muted-foreground">
+              Confirme quando o pagamento for processado na máquina.
+            </p>
+            <div className="flex gap-2 pt-2">
+              <Button
+                variant="outline"
+                className="flex-1 gap-1"
+                onClick={() => setShowCardModal(false)}
+              >
+                <X className="h-4 w-4" />
+                Cancelar
+              </Button>
+              <Button
+                className="flex-1 gap-1"
+                onClick={() => finalizeCardSale("credito")}
+              >
+                <Check className="h-4 w-4" />
+                Crédito
+              </Button>
+            </div>
+            <Button
+              variant="secondary"
+              className="w-full gap-1"
+              onClick={() => finalizeCardSale("debito")}
+            >
+              <Check className="h-4 w-4" />
+              Débito
+            </Button>
           </div>
         </div>
       )}
