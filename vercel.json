@@ -2,28 +2,31 @@
   "$schema": "https://openapi.vercel.sh/vercel.json",
   "rewrites": [
     {
-      "source": "/((?!api/|_next/|_static/|assets/|.*\\..*).*)",
+      "source": "/assets/:path*",
+      "destination": "/assets/:path*"
+    },
+    {
+      "source": "/icons/:path*",
+      "destination": "/icons/:path*"
+    },
+    {
+      "source": "/sounds/:path*",
+      "destination": "/sounds/:path*"
+    },
+    {
+      "source": "/produtos/:path*",
+      "destination": "/produtos/:path*"
+    },
+    {
+      "source": "/:path*\\.(js|css|png|jpg|jpeg|gif|svg|ico|webp|woff|woff2|ttf|eot|map|json|webmanifest|woff2)$",
+      "destination": "/:path*"
+    },
+    {
+      "source": "/(.*)",
       "destination": "/index.html"
     }
   ],
   "headers": [
-    {
-      "source": "/(.*)",
-      "headers": [
-        {
-          "key": "Cache-Control",
-          "value": "no-cache, no-store, must-revalidate"
-        },
-        {
-          "key": "Pragma",
-          "value": "no-cache"
-        },
-        {
-          "key": "Expires",
-          "value": "0"
-        }
-      ]
-    },
     {
       "source": "/assets/(.*)",
       "headers": [
