@@ -4,14 +4,16 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/com
 import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
 import { Label } from "@/components/ui/label";
-import { Utensils, LogOut, User, AlertCircle, Wifi, WifiOff } from "lucide-react";
+import { Utensils, LogOut, User, AlertCircle, ShieldCheck, Monitor } from "lucide-react";
 import { toast } from "@/hooks/use-toast";
 import { supabase } from "@/integrations/supabase/client";
+import { useAuth } from "@/contexts/AuthContext";
 import { setMesaSession, clearMesaSession, getMesaSession, getDeviceId } from "@/lib/mesaSession";
 import { haptOk, haptErr } from "@/lib/haptics";
 
 export default function SelecionarMesa() {
   const navigate = useNavigate();
+  const { user, isAdmin, signOut } = useAuth();
   const [numero, setNumero] = useState("");
   const [nome, setNome] = useState("");
   const [saving, setSaving] = useState(false);
@@ -28,9 +30,35 @@ export default function SelecionarMesa() {
     e.preventDefault();
 
     const mesaNum = parseInt(numero, 10);
-    if (isNaN(mesaNum) || mesaNum < 1 || mesaNum > 999) {
+    if (isNaN(mesaNum) || mesaNum < 0 || mesaNum > 999) {
       haptErr();
-      toast({ title: "Número de mesa inválido", description: "Digite um número entre 1 e 999.", variant: "destructive" });
+      toast({ title: "Número de mesa inválido", description: "Digite um número entre 0 e 999.", variant: "destructive" });
+      return;
+    }
+
+    // Mesa 0: só admin logado pode acessar (vai para o painel admin)
+    if (mesaNum === 0) {
+      if (!isAdmin) {
+        haptErr();
+        toast({
+          title: "Acesso restrito",
+          description: "Mesa 0 é exclusiva para administradores. Faça login como admin.",
+          variant: "destructive",
+        });
+        return;
+      }
+
+      // Salva mesa 0 localmente (admin) e vai para o painel
+      setMesaSession({
+        numero: 0,
+        nome_cliente: user?.email || "Admin",
+        device_id: getDeviceId(),
+        created_at: new Date().toISOString(),
+      });
+
+      haptOk();
+      toast({ title: "Acesso Admin liberado!", description: "Bem-vindo ao painel!" });
+      navigate("/admin/pdv");
       return;
     }
 
@@ -137,6 +165,14 @@ export default function SelecionarMesa() {
               Informe o número da sua mesa e seu nome para começar
             </CardDescription>
           </div>
+          {isAdmin && (
+            <div className="bg-amber-50 dark:bg-amber-950/30 border border-amber-200 dark:border-amber-800 rounded-lg p-3 text-xs text-amber-700 dark:text-amber-300 flex items-center gap-2">
+              <ShieldCheck className="h-4 w-4 shrink-0" />
+              <span>
+                Você está logado como admin. Use a <strong>mesa 0</strong> para acessar o painel.
+              </span>
+            </div>
+          )}
         </CardHeader>
         <CardContent>
           <form onSubmit={handleSubmit} className="space-y-4">
@@ -148,9 +184,9 @@ export default function SelecionarMesa() {
               <Input
                 id="numero"
                 type="number"
-                min="1"
+                min="0"
                 max="999"
-                placeholder="Ex: 5"
+                placeholder={isAdmin ? "Ex: 5 (ou 0 para admin)" : "Ex: 5"}
                 value={numero}
                 onChange={(e) => setNumero(e.target.value)}
                 className="text-lg text-center font-bold"
@@ -158,6 +194,12 @@ export default function SelecionarMesa() {
                 autoFocus
                 disabled={saving}
               />
+              {isAdmin && (
+                <p className="text-[10px] text-amber-600 dark:text-amber-400 flex items-center gap-1">
+                  <Monitor className="h-3 w-3" />
+                  <span>Digite <strong>0</strong> para abrir o painel de admin</span>
+                </p>
+              )}
             </div>
             <div className="space-y-2">
               <Label htmlFor="nome" className="flex items-center gap-2">
@@ -171,9 +213,14 @@ export default function SelecionarMesa() {
                 value={nome}
                 onChange={(e) => setNome(e.target.value)}
                 className="text-lg"
-                required
+                required={!isAdmin}
                 disabled={saving}
               />
+              {isAdmin && (
+                <p className="text-[10px] text-muted-foreground">
+                  (Opcional para mesa 0 - admin)
+                </p>
+              )}
             </div>
 
             <div className="bg-blue-50 dark:bg-blue-950/30 border border-blue-200 dark:border-blue-800 rounded-lg p-3 text-xs text-blue-700 dark:text-blue-300 space-y-1">
@@ -199,6 +246,24 @@ export default function SelecionarMesa() {
                 <LogOut className="h-4 w-4" />
               </Button>
             </div>
+
+            {isAdmin && (
+              <div className="pt-2 border-t border-border space-y-2">
+                <Button
+                  type="button"
+                  variant="outline"
+                  className="w-full gap-2"
+                  onClick={async () => {
+                    await signOut();
+                    clearMesaSession();
+                    window.location.href = "/admin/login";
+                  }}
+                >
+                  <LogOut className="h-4 w-4" />
+                  Sair da conta admin
+                </Button>
+              </div>
+            )}
           </form>
         </CardContent>
       </Card>

@@ -19,6 +19,11 @@ export function StoreHeader() {
     return () => clearInterval(interval);
   }, []);
 
+  useEffect(() => {
+    // Quando o usuário muda (login/logout), recarrega a mesa
+    setMesa(getMesaSession());
+  }, [user]);
+
   return (
     <header className="sticky top-0 z-40 bg-card shadow-md">
       <div className="container flex items-center justify-between pt-1.5 pb-1.5 sm:pt-3 sm:pb-3">
@@ -77,7 +82,15 @@ export function StoreHeader() {
             </Button>
           ) : null}
           {user && (
-            <Button variant="ghost" size="sm" onClick={signOut}>
+            <Button
+              variant="ghost"
+              size="sm"
+              onClick={async () => {
+                await signOut();
+                clearMesaSession();
+                window.location.href = "/selecionar-mesa";
+              }}
+            >
               <LogOut className="h-4 w-4 mr-1" /> Sair
             </Button>
           )}
@@ -91,6 +104,21 @@ export function StoreHeader() {
               <Link to="/admin">
                 <Settings className="h-4 w-4" />
               </Link>
+            </Button>
+          )}
+          {user && (
+            <Button
+              variant="ghost"
+              size="icon"
+              className="h-8 w-8"
+              onClick={async () => {
+                await signOut();
+                clearMesaSession();
+                window.location.href = "/selecionar-mesa";
+              }}
+              title="Sair"
+            >
+              <LogOut className="h-4 w-4" />
             </Button>
           )}
           <CartButton />
