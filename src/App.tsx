@@ -86,12 +86,31 @@ function ConditionalCartDrawer() {
 }
 
 // Redireciona / para /cardapio (se tiver mesa) ou /selecionar-mesa
+// Admin logado vai direto para /admin/pdv
 function SelecionarMesaRedirect() {
   const navigate = useNavigate();
+  const { user, isAdmin, loading } = useAuth();
   useEffect(() => {
+    if (loading) return;
+
+    // Admin logado vai direto para o painel
+    if (isAdmin || user) {
+      navigate("/admin/pdv", { replace: true });
+      return;
+    }
+
     const session = getMesaSession();
     navigate(session ? "/cardapio" : "/selecionar-mesa", { replace: true });
-  }, [navigate]);
+  }, [navigate, user, isAdmin, loading]);
+
+  if (loading) {
+    return (
+      <div className="flex h-screen items-center justify-center">
+        <div className="h-8 w-8 animate-spin rounded-full border-4 border-primary border-t-transparent" />
+      </div>
+    );
+  }
+
   return (
     <div className="flex h-screen items-center justify-center">
       <div className="h-8 w-8 animate-spin rounded-full border-4 border-primary border-t-transparent" />
