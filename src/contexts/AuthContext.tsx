@@ -92,6 +92,23 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
   }, []);
 
   useEffect(() => {
+    if (!user) {
+      setIsAdmin(false);
+      return;
+    }
+    // Re-verifica admin sempre que o user muda
+    checkAdmin(user.id);
+  }, [user?.id]);
+
+  useEffect(() => {
+    if (!user) {
+      setProfile(null);
+      return;
+    }
+    fetchProfile(user.id);
+  }, [user?.id]);
+
+  useEffect(() => {
     if (!Capacitor.isNativePlatform()) return;
     const handle = CapacitorApp.addListener("appUrlOpen", async ({ url }) => {
       if (!url.startsWith(NATIVE_OAUTH_REDIRECT)) return;

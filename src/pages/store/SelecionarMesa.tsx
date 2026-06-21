@@ -13,7 +13,7 @@ import { haptOk, haptErr } from "@/lib/haptics";
 
 export default function SelecionarMesa() {
   const navigate = useNavigate();
-  const { user, isAdmin, signOut } = useAuth();
+  const { user, isAdmin, signOut, loading: authLoading } = useAuth();
   const [numero, setNumero] = useState("");
   const [nome, setNome] = useState("");
   const [saving, setSaving] = useState(false);
@@ -25,6 +25,15 @@ export default function SelecionarMesa() {
       navigate("/cardapio");
     }
   }, [navigate]);
+
+  // Mostra loading enquanto verifica auth
+  if (authLoading) {
+    return (
+      <div className="min-h-screen flex items-center justify-center">
+        <div className="h-8 w-8 animate-spin rounded-full border-4 border-primary border-t-transparent" />
+      </div>
+    );
+  }
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
