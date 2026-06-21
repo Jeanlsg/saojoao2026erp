@@ -30,6 +30,9 @@ npm-debug.log*
 # Supabase (se usar CLI localmente)
 .supabase/
 
+# gcloud CLI (credenciais sensíveis)
+gcloud/
+
 # Capacitor
 ios/App/Pods/
 ios/App/build/

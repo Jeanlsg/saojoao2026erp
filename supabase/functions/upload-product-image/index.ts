@@ -64,7 +64,7 @@ Deno.serve(async (req) => {
         'apikey': SUPABASE_SERVICE_ROLE_KEY,
         'Content-Type': 'application/json',
       },
-      body: JSON.stringify({ public: true, fileSizeLimit: '5MiB' }),
+      body: JSON.stringify({ public: true, fileSizeLimit: '5MB' }),
     }).catch(() => { /* bucket já existe */ });
 
     // 2) Upload usando a REST API do Storage

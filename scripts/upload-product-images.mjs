@@ -83,6 +83,7 @@ const PRODUCT_MAP = {
   'refri-200.jpg':      'prd-refri-200',
   'coca-350.jpg':       'prd-coca-350',
   'agua.jpg':           'prd-agua',
+  'skol.jpg':           'prd-skol',
 };
 
 async function main() {
@@ -96,7 +97,7 @@ async function main() {
     console.log(`📁 Criando bucket "${BUCKET}"...`);
     const { error: bucketErr } = await supabase.storage.createBucket(BUCKET, {
       public: true,
-      fileSizeLimit: '5MiB',
+      fileSizeLimit: 5242880, // 5MB em bytes
     });
     if (bucketErr && !bucketErr.message.includes('already exists')) {
       console.error('✖ Erro ao criar bucket:', bucketErr.message);
