@@ -102,6 +102,7 @@ export default function PDV() {
     if (cart.length === 0) return;
 
     const items = cart.map((item) => ({
+      productId: item.productId,
       productName: item.productName,
       quantity: item.quantity,
       price: item.price,
@@ -141,6 +142,7 @@ export default function PDV() {
     if (cart.length === 0) return;
 
     const items = cart.map((item) => ({
+      productId: item.productId,
       productName: item.productName,
       quantity: item.quantity,
       price: item.price,
