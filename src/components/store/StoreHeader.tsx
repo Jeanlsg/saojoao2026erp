@@ -1,4 +1,5 @@
-import { Clock, MapPin, ShoppingCart, User, LogOut, Settings, Package, Utensils, ShieldCheck, Sun, Moon } from "lucide-react";
+import { useState, useEffect } from "react";
+import { Clock, MapPin, ShoppingCart, User, LogOut, Settings, Package, Utensils } from "lucide-react";
 import { useCart } from "@/contexts/CartContext";
 import { useAuth } from "@/contexts/AuthContext";
 import { getMesaSession, clearMesaSession } from "@/lib/mesaSession";
@@ -68,56 +69,16 @@ export function StoreHeader() {
 
         {/* Actions - hidden on mobile (bottom nav handles it) */}
         <div className="hidden sm:flex items-center gap-2 shrink-0">
-          {!user && (
-            <Button variant="outline" size="sm" asChild className="gap-1">
-              <Link to="/admin/login">
-                <ShieldCheck className="h-3.5 w-3.5" />
-                Admin/Entregas
+          {user ? (
+            <Button variant="ghost" size="sm" asChild>
+              <Link to="/perfil">
+                <User className="h-4 w-4 mr-1" /> {profile?.full_name?.split(" ")[0] || "Perfil"}
               </Link>
             </Button>
-          )}
-          <ThemeToggle isDark={isDark} setTheme={setTheme} />
-          {user ? (
-            <DropdownMenu>
-              <DropdownMenuTrigger asChild>
-                <Button variant="ghost" size="icon" className="rounded-full">
-                  <Avatar className="h-8 w-8">
-                    <AvatarImage src={profile?.avatar_url || user.user_metadata?.avatar_url} />
-                    <AvatarFallback className="bg-primary text-primary-foreground text-xs">
-                      {(profile?.full_name || user.email || "U").charAt(0).toUpperCase()}
-                    </AvatarFallback>
-                  </Avatar>
-                </Button>
-              </DropdownMenuTrigger>
-              <DropdownMenuContent align="end" className="w-48">
-                <div className="px-2 py-1.5">
-                  <p className="text-sm font-medium truncate">{profile?.full_name || user.email}</p>
-                  <p className="text-xs text-muted-foreground truncate">{user.email}</p>
-                </div>
-                <DropdownMenuSeparator />
-                <DropdownMenuItem asChild>
-                  <Link to="/perfil"><User className="h-4 w-4 mr-2" /> Meu perfil</Link>
-                </DropdownMenuItem>
-                <DropdownMenuItem asChild>
-                  <Link to="/meus-pedidos"><Package className="h-4 w-4 mr-2" /> Meus pedidos</Link>
-                </DropdownMenuItem>
-                {isAdmin && (
-                  <DropdownMenuItem asChild>
-                    <Link to="/admin">
-                      <Settings className="h-4 w-4 mr-2" /> Painel Admin
-                    </Link>
-                  </DropdownMenuItem>
-                )}
-                <DropdownMenuItem onClick={signOut}>
-                  <LogOut className="h-4 w-4 mr-2" /> Sair
-                </DropdownMenuItem>
-              </DropdownMenuContent>
-            </DropdownMenu>
-          ) : (
-            <Button variant="ghost" size="sm" asChild>
-              <Link to="/login">
-                <User className="h-4 w-4 mr-1" /> Entrar
-              </Link>
+          ) : null}
+          {user && (
+            <Button variant="ghost" size="sm" onClick={signOut}>
+              <LogOut className="h-4 w-4 mr-1" /> Sair
             </Button>
           )}
           <CartButton />
@@ -125,7 +86,6 @@ export function StoreHeader() {
 
         {/* Mobile: only cart button visible in header */}
         <div className="flex sm:hidden items-center gap-1.5 shrink-0">
-          <ThemeToggle isDark={isDark} setTheme={setTheme} />
           {isAdmin && (
             <Button variant="ghost" size="icon" className="h-8 w-8" asChild>
               <Link to="/admin">
@@ -137,21 +97,6 @@ export function StoreHeader() {
         </div>
       </div>
     </header>
-  );
-}
-
-function ThemeToggle({ isDark, setTheme }: { isDark: boolean; setTheme: (t: string) => void }) {
-  return (
-    <Button
-      variant="ghost"
-      size="icon"
-      onClick={() => setTheme(isDark ? "light" : "dark")}
-      className="h-8 w-8"
-      aria-label={isDark ? "Mudar para tema claro" : "Mudar para tema escuro"}
-      title={isDark ? "Tema claro" : "Tema escuro"}
-    >
-      {isDark ? <Sun className="h-4 w-4" /> : <Moon className="h-4 w-4" />}
-    </Button>
   );
 }
 

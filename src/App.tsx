@@ -2,7 +2,7 @@ import { Suspense, lazy, useEffect } from "react";
 import { Toaster } from "@/components/ui/toaster";
 import { Toaster as Sonner } from "@/components/ui/sonner";
 import { TooltipProvider } from "@/components/ui/tooltip";
-import { BrowserRouter, Routes, Route, Navigate, useLocation } from "react-router-dom";
+import { BrowserRouter, Routes, Route, Navigate, useLocation, useNavigate } from "react-router-dom";
 import { ThemeProvider, useTheme } from "next-themes";
 import { StoreProvider } from "@/contexts/StoreContext";
 import { CartProvider } from "@/contexts/CartContext";
@@ -11,6 +11,8 @@ import { AdminProvider } from "@/contexts/AdminContext";
 import { ProtectedRoute } from "@/components/auth/ProtectedRoute";
 import { MesaProtectedRoute } from "@/components/auth/MesaProtectedRoute";
 import { CartDrawer } from "@/components/store/CartDrawer";
+import { getMesaSession } from "@/lib/mesaSession";
+import { useMesaHeartbeat } from "@/hooks/useMesaHeartbeat";
 import { useNotificationTapHandler } from "@/hooks/useNotificationTapHandler";
 import { useNativeThemeSync } from "@/hooks/useNativeThemeSync";
 import { usePushRegistration } from "@/hooks/usePushRegistration";
@@ -23,6 +25,7 @@ import { AdminLayout } from "@/components/admin/AdminLayout";
 // Páginas de usuário (clientes)
 const SelecionarMesa = lazy(() => import("./pages/store/SelecionarMesa"));
 const LoginEntregador = lazy(() => import("./pages/store/LoginEntregador"));
+const MeusPedidosMesa = lazy(() => import("./pages/store/MeusPedidosMesa"));
 const Login = lazy(() => import("./pages/store/Login"));
 const VerifyEmail = lazy(() => import("./pages/store/VerifyEmail"));
 const ForgotPassword = lazy(() => import("./pages/store/ForgotPassword"));
@@ -71,6 +74,7 @@ const ThemeColorUpdater = () => {
 const RouterBootstrap = () => {
   useNotificationTapHandler();
   usePushRegistration();
+  useMesaHeartbeat();
   return null;
 };
 
@@ -81,6 +85,19 @@ function ConditionalCartDrawer() {
   return <CartDrawer />;
 }
 
+// Redireciona / para /cardapio (se tiver mesa) ou /selecionar-mesa
+function SelecionarMesaRedirect() {
+  const navigate = useNavigate();
+  useEffect(() => {
+    const session = getMesaSession();
+    navigate(session ? "/cardapio" : "/selecionar-mesa", { replace: true });
+  }, [navigate]);
+  return (
+    <div className="flex h-screen items-center justify-center">
+      <div className="h-8 w-8 animate-spin rounded-full border-4 border-primary border-t-transparent" />
+    </div>
+  );
+}
 const PageLoader = () => (
   <div className="flex h-screen items-center justify-center">
     <div className="h-8 w-8 animate-spin rounded-full border-4 border-primary border-t-transparent" />
@@ -101,16 +118,20 @@ const App = () => (
               <Suspense fallback={<PageLoader />}>
                 <Routes>
                   {/* Tela inicial: selecionar mesa */}
+                  <Route path="/" element={<SelecionarMesaRedirect />} />
+
+                  {/* Tela de seleção de mesa */}
                   <Route path="/selecionar-mesa" element={<SelecionarMesa />} />
 
-                  {/* Rotas públicas da loja (clientes) - protegidas por mesa */}
-                  <Route path="/" element={<MesaProtectedRoute><Index /></MesaProtectedRoute>} />
+                  {/* Cardápio (rota /cardapio) */}
+                  <Route path="/cardapio" element={<MesaProtectedRoute><Index /></MesaProtectedRoute>} />
                   <Route path="/login" element={<Login />} />
                   <Route path="/verify-email" element={<VerifyEmail />} />
                   <Route path="/forgot-password" element={<ForgotPassword />} />
                   <Route path="/reset-password" element={<ResetPassword />} />
                   <Route path="/localizacao" element={<MesaProtectedRoute><StoreLocation /></MesaProtectedRoute>} />
                   <Route path="/ofertas" element={<MesaProtectedRoute><Ofertas /></MesaProtectedRoute>} />
+                  <Route path="/meus-pedidos-mesa" element={<MesaProtectedRoute><MeusPedidosMesa /></MesaProtectedRoute>} />
                   <Route path="/meus-pedidos" element={<MesaProtectedRoute><MyOrders /></MesaProtectedRoute>} />
                   <Route path="/perfil" element={<ProtectedRoute><Profile /></ProtectedRoute>} />
                   <Route path="/pedido/:orderId" element={<PedidoConfirmado />} />

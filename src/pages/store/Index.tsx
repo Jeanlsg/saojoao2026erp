@@ -1,7 +1,8 @@
 import { useState, useMemo } from "react";
+import { Link } from "react-router-dom";
 import { useStore } from "@/contexts/StoreContext";
 import { StoreHeader } from "@/components/store/StoreHeader";
-import { PromoBanner } from "@/components/store/PromoBanner";
+// import { PromoBanner } from "@/components/store/PromoBanner"; // Oculto por enquanto
 import { CategoryBar } from "@/components/store/CategoryBar";
 import { SearchBar, ViewMode } from "@/components/store/SearchBar";
 import { ProductCard } from "@/components/store/ProductCard";
@@ -10,6 +11,8 @@ import { WelcomeSignupDialog } from "@/components/store/WelcomeSignupDialog";
 import { ComboSuggestionDialog } from "@/components/store/ComboSuggestionDialog";
 import { BottomNav } from "@/components/store/BottomNav";
 import { LegalFooter } from "@/components/LegalFooter";
+import { ErrorBoundary } from "@/components/ErrorBoundary";
+import { Package, ChevronRight } from "lucide-react";
 
 const Index = () => {
   const { products, categories, loading } = useStore();
@@ -42,9 +45,29 @@ const Index = () => {
   }, [filteredProducts, activeCategory, search, categories]);
 
   return (
-    <div className="min-h-screen bg-background pb-[calc(5rem+env(safe-area-inset-bottom))] sm:pb-0">
-      <StoreHeader />
-      <PromoBanner />
+    <ErrorBoundary>
+      <div className="min-h-screen bg-background pb-[calc(5rem+env(safe-area-inset-bottom))] sm:pb-0">
+        <StoreHeader />
+        {/* <PromoBanner /> */}
+
+        {/* Card Meus Pedidos (acima das categorias) */}
+        <div className="container py-2 sm:py-3">
+          <Link
+            to="/meus-pedidos-mesa"
+            className="flex items-center gap-3 bg-gradient-to-r from-primary/10 to-primary/5 hover:from-primary/15 hover:to-primary/10 border border-primary/20 rounded-xl p-3 transition-colors"
+          >
+            <div className="w-10 h-10 bg-primary/20 rounded-full flex items-center justify-center shrink-0">
+              <Package className="h-5 w-5 text-primary" />
+            </div>
+            <div className="flex-1 min-w-0">
+              <p className="font-medium text-sm">Meus Pedidos</p>
+              <p className="text-xs text-muted-foreground">
+                Acompanhe o status dos seus pedidos
+              </p>
+            </div>
+            <ChevronRight className="h-5 w-5 text-muted-foreground" />
+          </Link>
+        </div>
 
       <CategoryBar activeCategory={activeCategory} onSelect={setActiveCategory} />
 
@@ -88,7 +111,8 @@ const Index = () => {
       <ComboSuggestionDialog />
       <LegalFooter />
       <BottomNav />
-    </div>
+      </div>
+    </ErrorBoundary>
   );
 };
 

@@ -1,4 +1,5 @@
 import { useState, useEffect } from "react";
+import { useNavigate } from "react-router-dom";
 import { Drawer, DrawerContent, DrawerTitle, DrawerDescription } from "@/components/ui/drawer";
 import { LocalPixDialog } from "./LocalPixDialog";
 import { useCart } from "@/contexts/CartContext";
@@ -18,6 +19,7 @@ type PaymentMethod = "dinheiro" | "pix" | "credito" | "debito";
 type Step = "items" | "checkout";
 
 export function CartDrawer() {
+  const navigate = useNavigate();
   const { items, isOpen, setIsOpen, updateQuantity, removeItem, clearCart, totalPrice, totalItems, appliedCombos, totalDiscount, wholesaleDiscount, finalPrice } = useCart();
   const { getApplicableDiscount } = useStore();
   const { user, profile } = useAuth();
@@ -37,9 +39,6 @@ export function CartDrawer() {
   useEffect(() => {
     const session = getMesaSession();
     setMesaSessionState(session);
-    if (session) {
-      setCustomerName(session.nome_cliente);
-    }
   }, [isOpen]);
 
   useEffect(() => {
@@ -68,11 +67,11 @@ export function CartDrawer() {
     const orderId = crypto.randomUUID();
 
     try {
+      // Monta o orderData com os campos básicos (sempre funcionam)
       const orderData: any = {
         id: orderId,
         customer_name: mesaSession.nome_cliente,
         customer_phone: null,
-        table_number: String(mesaSession.numero),
         items: items.map((i) => ({
           productId: i.product.id,
           productName: i.product.name,
@@ -83,8 +82,15 @@ export function CartDrawer() {
         status: "pendente",
         payment_method: paymentMethod,
         user_id: null,
-        mesa_device_id: mesaSession.device_id,
       };
+
+      // Tenta adicionar colunas opcionais (caso a migration tenha sido aplicada)
+      try {
+        orderData.table_number = String(mesaSession.numero);
+        orderData.mesa_device_id = mesaSession.device_id;
+      } catch {
+        // Colunas opcionais não existem
+      }
 
       const { error } = await db.from("orders").insert(orderData);
       if (error) throw error;
@@ -118,7 +124,18 @@ export function CartDrawer() {
         }
 
         haptOk();
-        toast({ title: "✅ Pedido enviado!", description: `Pedido para mesa ${mesaSession.numero}.` });
+        toast({
+          title: "✅ Pedido enviado!",
+          description: `Pedido para mesa ${mesaSession.numero}.`,
+          action: (
+            <button
+              onClick={() => navigate("/meus-pedidos-mesa")}
+              className="text-sm font-medium underline"
+            >
+              Ver meus pedidos
+            </button>
+          ),
+        });
         clearCart();
         setStep("items");
         setIsOpen(false);
