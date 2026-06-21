@@ -29,7 +29,7 @@ interface CartItem {
 }
 
 export default function PDV() {
-  const { products, categories, updateOrderPaid, loading } = useAdmin();
+  const { products, categories, updateOrderPaid, loading: adminLoading } = useAdmin();
   const [cart, setCart] = useState<CartItem[]>([]);
   const [selectedCategory, setSelectedCategory] = useState<string>("all");
   const [customerName, setCustomerName] = useState("");
@@ -223,235 +223,233 @@ export default function PDV() {
     setLastSale(null);
   };
 
-  if (loading) {
-    return (
-      <AdminLayout>
-        <div className="flex items-center justify-center h-96">
+  // O AdminLayout já envolve a página via rota aninhada no App.tsx.
+  // Renderizamos apenas o conteúdo aqui para evitar header duplicado.
+  // Mostrar um overlay leve de loading por cima se estiver carregando,
+  // mas não bloquear a tela inteira — os produtos podem aparecer aos poucos.
+
+  return (
+    <div className="flex flex-col lg:flex-row gap-4 h-[calc(100vh-8rem)] relative">
+      {adminLoading && products.length === 0 && (
+        <div className="absolute inset-0 flex items-center justify-center bg-background/80 z-10">
           <div className="text-center">
             <div className="h-8 w-8 animate-spin rounded-full border-4 border-primary border-t-transparent mx-auto mb-4" />
             <p className="text-muted-foreground">Carregando produtos...</p>
           </div>
         </div>
-      </AdminLayout>
-    );
-  }
-
-  return (
-    <AdminLayout>
-      <div className="flex flex-col lg:flex-row gap-4 h-[calc(100vh-8rem)]">
-        {/* Grid de Produtos */}
-        <div className="flex-1 flex flex-col min-w-0">
-          {/* Categorias */}
-          <div className="flex gap-2 mb-4 overflow-x-auto pb-2 flex-wrap">
+      )}
+      {/* Grid de Produtos */}
+      <div className="flex-1 flex flex-col min-w-0">
+        {/* Categorias */}
+        <div className="flex gap-2 mb-4 overflow-x-auto pb-2 flex-wrap">
+          <Button
+            variant={selectedCategory === "all" ? "default" : "outline"}
+            size="sm"
+            onClick={() => setSelectedCategory("all")}
+          >
+            Todos
+          </Button>
+          {categories.map((cat) => (
             <Button
-              variant={selectedCategory === "all" ? "default" : "outline"}
+              key={cat.id}
+              variant={selectedCategory === cat.id ? "default" : "outline"}
               size="sm"
-              onClick={() => setSelectedCategory("all")}
+              onClick={() => setSelectedCategory(cat.id)}
             >
-              Todos
+              {cat.name}
             </Button>
-            {categories.map((cat) => (
-              <Button
-                key={cat.id}
-                variant={selectedCategory === cat.id ? "default" : "outline"}
-                size="sm"
-                onClick={() => setSelectedCategory(cat.id)}
-              >
-                {cat.name}
-              </Button>
-            ))}
-          </div>
-
-          {/* Produtos */}
-          <ScrollArea className="flex-1">
-            {filteredProducts.length === 0 ? (
-              <div className="flex flex-col items-center justify-center h-64 text-muted-foreground">
-                <ShoppingCart className="h-16 w-16 mb-4 opacity-30" />
-                <p className="text-lg font-medium">Nenhum produto disponível</p>
-                <p className="text-sm">Verifique a conexão com o banco de dados</p>
-              </div>
-            ) : (
-              <div className="grid grid-cols-2 sm:grid-cols-3 xl:grid-cols-4 2xl:grid-cols-5 gap-3">
-                {filteredProducts.map((product) => (
-                  <button
-                    key={product.id}
-                    onClick={() => addToCart(product)}
-                    className="flex flex-col items-center p-3 bg-card rounded-xl border border-border hover:border-primary hover:shadow-md transition-all active:scale-95 text-left"
-                  >
-                    <div className="w-full aspect-square rounded-lg overflow-hidden bg-muted mb-2">
-                      {product.image ? (
-                        <img
-                          src={product.image}
-                          alt={product.name}
-                          className="w-full h-full object-cover"
-                          onError={(e) => {
-                            (e.target as HTMLImageElement).style.display = "none";
-                          }}
-                        />
-                      ) : (
-                        <div className="w-full h-full flex items-center justify-center text-muted-foreground text-xs">
-                          Sem foto
-                        </div>
-                      )}
-                    </div>
-                    <span className="font-medium text-sm text-center line-clamp-2 w-full">
-                      {product.name}
-                    </span>
-                    <span className="text-primary font-bold mt-1">
-                      R$ {(product.promoPrice ?? product.price).toFixed(2).replace(".", ",")}
-                    </span>
-                    <Badge variant="secondary" className="mt-1 text-xs">
-                      {product.stock} un
-                    </Badge>
-                  </button>
-                ))}
-              </div>
-            )}
-          </ScrollArea>
+          ))}
         </div>
 
-        {/* Carrinho / Caixa */}
-        <div className="w-full lg:w-96 flex flex-col bg-card rounded-xl border border-border overflow-hidden">
-          {/* Header */}
-          <div className="p-4 border-b border-border flex items-center gap-2">
-            <ShoppingCart className="h-5 w-5 text-primary" />
-            <span className="font-bold text-lg">Caixa</span>
-            {cart.length > 0 && (
-              <Badge className="ml-auto">{cart.reduce((s, i) => s + i.quantity, 0)}</Badge>
-            )}
-          </div>
-
-          {/* Nome do Cliente */}
-          <div className="p-3 border-b border-border">
-            <div className="flex items-center gap-2">
-              <User className="h-4 w-4 text-muted-foreground" />
-              <Input
-                placeholder="Nome do cliente (opcional)"
-                value={customerName}
-                onChange={(e) => setCustomerName(e.target.value)}
-                className="text-sm"
-              />
+        {/* Produtos */}
+        <ScrollArea className="flex-1">
+          {filteredProducts.length === 0 ? (
+            <div className="flex flex-col items-center justify-center h-64 text-muted-foreground">
+              <ShoppingCart className="h-16 w-16 mb-4 opacity-30" />
+              <p className="text-lg font-medium">Nenhum produto disponível</p>
+              <p className="text-sm">Verifique a conexão com o banco de dados</p>
             </div>
-          </div>
-
-          {/* Itens do Carrinho */}
-          <ScrollArea className="flex-1 p-3">
-            {cart.length === 0 ? (
-              <div className="flex flex-col items-center justify-center h-40 text-muted-foreground">
-                <ShoppingCart className="h-10 w-10 mb-2 opacity-30" />
-                <p className="text-sm">Nenhum item</p>
-              </div>
-            ) : (
-              <div className="space-y-2">
-                {cart.map((item) => (
-                  <div
-                    key={item.productId}
-                    className="flex items-center gap-2 p-2 bg-background rounded-lg"
-                  >
-                    <div className="flex-1 min-w-0">
-                      <p className="text-sm font-medium truncate">{item.productName}</p>
-                      <p className="text-xs text-muted-foreground">
-                        R$ {item.price.toFixed(2).replace(".", ",")} × {item.quantity}
-                      </p>
-                    </div>
-                    <div className="flex items-center gap-1">
-                      <Button
-                        size="icon"
-                        variant="ghost"
-                        className="h-7 w-7"
-                        onClick={() => removeFromCart(item.productId)}
-                      >
-                        <Minus className="h-3 w-3" />
-                      </Button>
-                      <span className="text-sm font-medium w-6 text-center">
-                        {item.quantity}
-                      </span>
-                      <Button
-                        size="icon"
-                        variant="ghost"
-                        className="h-7 w-7"
-                        onClick={() => {
-                          const p = products.find((pr) => pr.id === item.productId);
-                          if (p) addToCart(p);
+          ) : (
+            <div className="grid grid-cols-2 sm:grid-cols-3 xl:grid-cols-4 2xl:grid-cols-5 gap-3">
+              {filteredProducts.map((product) => (
+                <button
+                  key={product.id}
+                  onClick={() => addToCart(product)}
+                  className="flex flex-col items-center p-3 bg-card rounded-xl border border-border hover:border-primary hover:shadow-md transition-all active:scale-95 text-left"
+                >
+                  <div className="w-full aspect-square rounded-lg overflow-hidden bg-muted mb-2">
+                    {product.image ? (
+                      <img
+                        src={product.image}
+                        alt={product.name}
+                        className="w-full h-full object-cover"
+                        onError={(e) => {
+                          (e.target as HTMLImageElement).style.display = "none";
                         }}
-                      >
-                        <Plus className="h-3 w-3" />
-                      </Button>
-                    </div>
-                    <span className="text-sm font-bold w-16 text-right">
-                      R$ {(item.price * item.quantity).toFixed(2).replace(".", ",")}
-                    </span>
+                      />
+                    ) : (
+                      <div className="w-full h-full flex items-center justify-center text-muted-foreground text-xs">
+                        Sem foto
+                      </div>
+                    )}
                   </div>
-                ))}
-              </div>
-            )}
-          </ScrollArea>
-
-          {/* Total e Ações */}
-          <div className="p-4 border-t border-border space-y-3">
-            <div className="flex items-center justify-between">
-              <span className="text-lg font-bold">Total</span>
-              <span className="text-2xl font-bold text-primary">
-                R$ {total.toFixed(2).replace(".", ",")}
-              </span>
+                  <span className="font-medium text-sm text-center line-clamp-2 w-full">
+                    {product.name}
+                  </span>
+                  <span className="text-primary font-bold mt-1">
+                    R$ {(product.promoPrice ?? product.price).toFixed(2).replace(".", ",")}
+                  </span>
+                  <Badge variant="secondary" className="mt-1 text-xs">
+                    {product.stock} un
+                  </Badge>
+                </button>
+              ))}
             </div>
+          )}
+        </ScrollArea>
+      </div>
 
-            {paymentMethod === "dinheiro" && (
-              <div className="space-y-2 p-3 bg-muted rounded-lg">
-                <label className="text-sm font-medium">Valor recebido</label>
-                <Input
-                  type="number"
-                  placeholder="R$ 0,00"
-                  value={changeAmount}
-                  onChange={(e) => setChangeAmount(e.target.value)}
-                  className="text-lg font-bold"
-                />
-                {parseFloat(changeAmount) >= total && (
-                  <p className="text-sm text-green-600 font-medium">
-                    Troco: R$ {getChange().toFixed(2).replace(".", ",")}
-                  </p>
-                )}
-              </div>
-            )}
+      {/* Carrinho / Caixa */}
+      <div className="w-full lg:w-96 flex flex-col bg-card rounded-xl border border-border overflow-hidden">
+        {/* Header */}
+        <div className="p-4 border-b border-border flex items-center gap-2">
+          <ShoppingCart className="h-5 w-5 text-primary" />
+          <span className="font-bold text-lg">Caixa</span>
+          {cart.length > 0 && (
+            <Badge className="ml-auto">{cart.reduce((s, i) => s + i.quantity, 0)}</Badge>
+          )}
+        </div>
 
-            <div className="grid grid-cols-2 gap-2">
-              <Button
-                variant="outline"
-                className="gap-1"
-                onClick={() => handleCobrar("pix")}
-                disabled={cart.length === 0}
-              >
-                <QrCode className="h-4 w-4" />
-                PIX
-              </Button>
-              <Button
-                variant="outline"
-                className="gap-1"
-                onClick={() => handleCobrar("dinheiro")}
-                disabled={cart.length === 0}
-              >
-                <Banknote className="h-4 w-4" />
-                Dinheiro
-              </Button>
+        {/* Nome do Cliente */}
+        <div className="p-3 border-b border-border">
+          <div className="flex items-center gap-2">
+            <User className="h-4 w-4 text-muted-foreground" />
+            <Input
+              placeholder="Nome do cliente (opcional)"
+              value={customerName}
+              onChange={(e) => setCustomerName(e.target.value)}
+              className="text-sm"
+            />
+          </div>
+        </div>
+
+        {/* Itens do Carrinho */}
+        <ScrollArea className="flex-1 p-3">
+          {cart.length === 0 ? (
+            <div className="flex flex-col items-center justify-center h-40 text-muted-foreground">
+              <ShoppingCart className="h-10 w-10 mb-2 opacity-30" />
+              <p className="text-sm">Nenhum item</p>
             </div>
+          ) : (
+            <div className="space-y-2">
+              {cart.map((item) => (
+                <div
+                  key={item.productId}
+                  className="flex items-center gap-2 p-2 bg-background rounded-lg"
+                >
+                  <div className="flex-1 min-w-0">
+                    <p className="text-sm font-medium truncate">{item.productName}</p>
+                    <p className="text-xs text-muted-foreground">
+                      R$ {item.price.toFixed(2).replace(".", ",")} × {item.quantity}
+                    </p>
+                  </div>
+                  <div className="flex items-center gap-1">
+                    <Button
+                      size="icon"
+                      variant="ghost"
+                      className="h-7 w-7"
+                      onClick={() => removeFromCart(item.productId)}
+                    >
+                      <Minus className="h-3 w-3" />
+                    </Button>
+                    <span className="text-sm font-medium w-6 text-center">
+                      {item.quantity}
+                    </span>
+                    <Button
+                      size="icon"
+                      variant="ghost"
+                      className="h-7 w-7"
+                      onClick={() => {
+                        const p = products.find((pr) => pr.id === item.productId);
+                        if (p) addToCart(p);
+                      }}
+                    >
+                      <Plus className="h-3 w-3" />
+                    </Button>
+                  </div>
+                  <span className="text-sm font-bold w-16 text-right">
+                    R$ {(item.price * item.quantity).toFixed(2).replace(".", ",")}
+                  </span>
+                </div>
+              ))}
+            </div>
+          )}
+        </ScrollArea>
 
-            {paymentMethod === "dinheiro" && parseFloat(changeAmount) >= total && (
-              <Button className="w-full gap-1" onClick={handleDinheiroConfirm}>
-                <Check className="h-4 w-4" />
-                Confirmar Pagamento
-              </Button>
-            )}
+        {/* Total e Ações */}
+        <div className="p-4 border-t border-border space-y-3">
+          <div className="flex items-center justify-between">
+            <span className="text-lg font-bold">Total</span>
+            <span className="text-2xl font-bold text-primary">
+              R$ {total.toFixed(2).replace(".", ",")}
+            </span>
+          </div>
 
+          {paymentMethod === "dinheiro" && (
+            <div className="space-y-2 p-3 bg-muted rounded-lg">
+              <label className="text-sm font-medium">Valor recebido</label>
+              <Input
+                type="number"
+                placeholder="R$ 0,00"
+                value={changeAmount}
+                onChange={(e) => setChangeAmount(e.target.value)}
+                className="text-lg font-bold"
+              />
+              {parseFloat(changeAmount) >= total && (
+                <p className="text-sm text-green-600 font-medium">
+                  Troco: R$ {getChange().toFixed(2).replace(".", ",")}
+                </p>
+              )}
+            </div>
+          )}
+
+          <div className="grid grid-cols-2 gap-2">
             <Button
-              variant="ghost"
-              className="w-full gap-1 text-muted-foreground"
-              onClick={clearCart}
+              variant="outline"
+              className="gap-1"
+              onClick={() => handleCobrar("pix")}
               disabled={cart.length === 0}
             >
-              <Trash2 className="h-4 w-4" />
-              Cancelar
+              <QrCode className="h-4 w-4" />
+              PIX
+            </Button>
+            <Button
+              variant="outline"
+              className="gap-1"
+              onClick={() => handleCobrar("dinheiro")}
+              disabled={cart.length === 0}
+            >
+              <Banknote className="h-4 w-4" />
+              Dinheiro
             </Button>
           </div>
+
+          {paymentMethod === "dinheiro" && parseFloat(changeAmount) >= total && (
+            <Button className="w-full gap-1" onClick={handleDinheiroConfirm}>
+              <Check className="h-4 w-4" />
+              Confirmar Pagamento
+            </Button>
+          )}
+
+          <Button
+            variant="ghost"
+            className="w-full gap-1 text-muted-foreground"
+            onClick={clearCart}
+            disabled={cart.length === 0}
+          >
+            <Trash2 className="h-4 w-4" />
+            Cancelar
+          </Button>
         </div>
       </div>
 
@@ -512,6 +510,6 @@ export default function PDV() {
           </div>
         </div>
       )}
-    </AdminLayout>
+    </div>
   );
 }

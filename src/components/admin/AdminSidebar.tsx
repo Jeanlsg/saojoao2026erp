@@ -15,8 +15,8 @@ import {
 import { useAuth } from "@/contexts/AuthContext";
 
 const items = [
-  { title: "Dashboard", url: "/admin", icon: LayoutDashboard },
   { title: "Frente de Caixa", url: "/admin/pdv", icon: Monitor },
+  { title: "Dashboard", url: "/admin/dashboard", icon: LayoutDashboard },
   // Produtos engloba estoque (alerta + ajuste inline) — antes era uma página separada.
   { title: "Produtos", url: "/admin/produtos", icon: Package },
   { title: "Categorias", url: "/admin/categorias", icon: Tag },
@@ -36,7 +36,7 @@ export function AdminSidebar() {
   const { signOut } = useAuth();
 
   const isActive = (path: string) =>
-    path === "/admin" ? location.pathname === "/admin" : location.pathname.startsWith(path);
+    location.pathname === path || location.pathname.startsWith(path + "/");
 
   const handleLogout = async () => {
     await signOut();

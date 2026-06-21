@@ -2,7 +2,7 @@ import { Suspense, lazy, useEffect } from "react";
 import { Toaster } from "@/components/ui/toaster";
 import { Toaster as Sonner } from "@/components/ui/sonner";
 import { TooltipProvider } from "@/components/ui/tooltip";
-import { BrowserRouter, Routes, Route, Navigate } from "react-router-dom";
+import { BrowserRouter, Routes, Route, Navigate, useLocation } from "react-router-dom";
 import { ThemeProvider, useTheme } from "next-themes";
 import { StoreProvider } from "@/contexts/StoreContext";
 import { CartProvider } from "@/contexts/CartContext";
@@ -13,21 +13,25 @@ import { CartDrawer } from "@/components/store/CartDrawer";
 import { useNotificationTapHandler } from "@/hooks/useNotificationTapHandler";
 import { useNativeThemeSync } from "@/hooks/useNativeThemeSync";
 import { usePushRegistration } from "@/hooks/usePushRegistration";
-import Index from "./pages/Index";
-import Login from "./pages/Login";
+import Index from "./pages/store/Index";
 import NotFound from "./pages/NotFound";
 import { AdminLayout } from "@/components/admin/AdminLayout";
 
-const VerifyEmail = lazy(() => import("./pages/VerifyEmail"));
-const ForgotPassword = lazy(() => import("./pages/ForgotPassword"));
-const ResetPassword = lazy(() => import("./pages/ResetPassword"));
-const StoreLocation = lazy(() => import("./pages/StoreLocation"));
-const Ofertas = lazy(() => import("./pages/Ofertas"));
-const MyOrders = lazy(() => import("./pages/MyOrders"));
-const Profile = lazy(() => import("./pages/Profile"));
+// Páginas de usuário (clientes)
+const Login = lazy(() => import("./pages/store/Login"));
+const VerifyEmail = lazy(() => import("./pages/store/VerifyEmail"));
+const ForgotPassword = lazy(() => import("./pages/store/ForgotPassword"));
+const ResetPassword = lazy(() => import("./pages/store/ResetPassword"));
+const StoreLocation = lazy(() => import("./pages/store/StoreLocation"));
+const Ofertas = lazy(() => import("./pages/store/Ofertas"));
+const MyOrders = lazy(() => import("./pages/store/MyOrders"));
+const Profile = lazy(() => import("./pages/store/Profile"));
+
+// Páginas legais (compartilhadas)
 const TermsOfService = lazy(() => import("./pages/TermsOfService"));
 const PrivacyPolicy = lazy(() => import("./pages/PrivacyPolicy"));
 
+// Páginas de admin
 const AdminLogin = lazy(() => import("./pages/admin/AdminLogin"));
 const Dashboard = lazy(() => import("./pages/admin/Dashboard"));
 const PDV = lazy(() => import("./pages/admin/PDV"));
@@ -63,6 +67,13 @@ const RouterBootstrap = () => {
   return null;
 };
 
+// Renderiza o CartDrawer APENAS nas rotas de loja (não-admin)
+function ConditionalCartDrawer() {
+  const location = useLocation();
+  if (location.pathname.startsWith("/admin")) return null;
+  return <CartDrawer />;
+}
+
 const PageLoader = () => (
   <div className="flex h-screen items-center justify-center">
     <div className="h-8 w-8 animate-spin rounded-full border-4 border-primary border-t-transparent" />
@@ -82,6 +93,7 @@ const App = () => (
               <RouterBootstrap />
               <Suspense fallback={<PageLoader />}>
                 <Routes>
+                  {/* Rotas públicas da loja (clientes) */}
                   <Route path="/" element={<Index />} />
                   <Route path="/login" element={<Login />} />
                   <Route path="/verify-email" element={<VerifyEmail />} />
@@ -93,7 +105,12 @@ const App = () => (
                   <Route path="/perfil" element={<ProtectedRoute><Profile /></ProtectedRoute>} />
                   <Route path="/termos" element={<TermsOfService />} />
                   <Route path="/privacidade" element={<PrivacyPolicy />} />
+
+                  {/* Login de admin (rota pública isolada) */}
                   <Route path="/admin/login" element={<AdminLogin />} />
+
+                  {/* Área administrativa — isolada do fluxo da loja.
+                      O admin entra direto no PDV (Frente de Caixa) por padrão. */}
                   <Route
                     path="/admin"
                     element={
@@ -104,22 +121,24 @@ const App = () => (
                       </ProtectedRoute>
                     }
                   >
-                    <Route index element={<Dashboard />} />
+                    <Route index element={<Navigate to="/admin/pdv" replace />} />
+                    <Route path="pdv" element={<PDV />} />
+                    <Route path="dashboard" element={<Dashboard />} />
                     <Route path="produtos" element={<Products />} />
                     <Route path="categorias" element={<Categories />} />
                     <Route path="combos" element={<Combos />} />
                     <Route path="pedidos" element={<Orders />} />
-                    <Route path="pdv" element={<PDV />} />
                     <Route path="estoque" element={<Navigate to="/admin/produtos" replace />} />
                     <Route path="frete" element={<Freight />} />
                     <Route path="descontos" element={<Discounts />} />
                     <Route path="jornais" element={<Flyers />} />
                     <Route path="configuracoes" element={<Settings />} />
                   </Route>
+
                   <Route path="*" element={<NotFound />} />
                 </Routes>
               </Suspense>
-              <CartDrawer />
+              <ConditionalCartDrawer />
             </BrowserRouter>
           </CartProvider>
         </StoreProvider>

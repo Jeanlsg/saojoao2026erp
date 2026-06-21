@@ -11,6 +11,7 @@ import {
   Settings,
   ArrowLeft,
   Bell,
+  Monitor,
 } from "lucide-react";
 import { SidebarProvider, SidebarTrigger } from "@/components/ui/sidebar";
 import { AdminSidebar } from "./AdminSidebar";
@@ -20,6 +21,8 @@ import { useAdmin } from "@/contexts/AdminContext";
 // Mapa rota → ícone + label curto. Mostrar só ícone em telas pequenas
 // economiza espaço sem perder identificação.
 const ROUTE_META: { match: RegExp; icon: React.ElementType; label: string }[] = [
+  { match: /^\/admin\/pdv/, icon: Monitor, label: "Frente de Caixa" },
+  { match: /^\/admin\/dashboard/, icon: LayoutDashboard, label: "Dashboard" },
   { match: /^\/admin\/produtos/, icon: Package, label: "Produtos" },
   { match: /^\/admin\/categorias/, icon: Tag, label: "Categorias" },
   { match: /^\/admin\/combos/, icon: Flame, label: "Combos" },
@@ -28,7 +31,7 @@ const ROUTE_META: { match: RegExp; icon: React.ElementType; label: string }[] = 
   { match: /^\/admin\/descontos/, icon: Percent, label: "Descontos" },
   { match: /^\/admin\/jornais/, icon: Newspaper, label: "Jornais" },
   { match: /^\/admin\/configuracoes/, icon: Settings, label: "Configurações" },
-  { match: /^\/admin\/?$/, icon: LayoutDashboard, label: "Dashboard" },
+  { match: /^\/admin\/?$/, icon: Monitor, label: "Frente de Caixa" },
 ];
 
 function getRouteMeta(pathname: string) {
