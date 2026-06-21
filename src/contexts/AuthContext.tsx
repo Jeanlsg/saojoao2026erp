@@ -217,6 +217,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
       password,
       options: {
         data: { full_name: name },
+        // Não exige confirmação de email
         emailRedirectTo: window.location.origin,
       },
     });
@@ -224,6 +225,10 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
     // Save cpf_cnpj to profile if provided
     if (cpfCnpj && data.user) {
       await supabase.from("profiles").update({ cpf_cnpj: cpfCnpj }).eq("id", data.user.id);
+    }
+    // Login automático após cadastro (sem precisar confirmar email)
+    if (data.session) {
+      // Sessão criada automaticamente
     }
   };
 

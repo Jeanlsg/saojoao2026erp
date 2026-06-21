@@ -1,6 +1,5 @@
 import { useState, useEffect } from "react";
 import { useAuth } from "@/contexts/AuthContext";
-import { maskCpfCnpj } from "@/lib/masks";
 import { supabase } from "@/integrations/supabase/client";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
@@ -19,7 +18,6 @@ export default function Login() {
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
   const [name, setName] = useState("");
-  const [cpfCnpj, setCpfCnpj] = useState("");
   const [submitting, setSubmitting] = useState(false);
   const [redirecting, setRedirecting] = useState(false);
 
@@ -73,9 +71,9 @@ export default function Login() {
     setSubmitting(true);
     try {
       if (isSignUp) {
-        await signUpWithEmail(email, password, name, cpfCnpj);
-        toast({ title: "Código enviado!", description: "Verifique seu email para ativar sua conta." });
-        navigate("/verify-email", { state: { email } });
+        await signUpWithEmail(email, password, name);
+        // O useEffect vai redirecionar baseado no tipo de usuário
+        // (não precisa mais de verificação de email)
         return;
       } else {
         await signInWithEmail(email, password);
@@ -150,16 +148,10 @@ export default function Login() {
           </div>
           <form onSubmit={handleSubmit} className="space-y-3">
             {isSignUp && (
-              <>
-                <div className="space-y-1">
-                  <Label htmlFor="name">Nome</Label>
-                  <Input id="name" value={name} onChange={e => setName(e.target.value)} required />
-                </div>
-                <div className="space-y-1">
-                  <Label htmlFor="cpfCnpj">CPF ou CNPJ</Label>
-                  <Input id="cpfCnpj" placeholder="000.000.000-00 ou 00.000.000/0000-00" value={cpfCnpj} onChange={e => setCpfCnpj(maskCpfCnpj(e.target.value))} required />
-                </div>
-              </>
+              <div className="space-y-1">
+                <Label htmlFor="name">Nome</Label>
+                <Input id="name" value={name} onChange={e => setName(e.target.value)} required />
+              </div>
             )}
             <div className="space-y-1">
               <Label htmlFor="email">Email</Label>
