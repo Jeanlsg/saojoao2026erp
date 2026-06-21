@@ -12,7 +12,13 @@ export function ProtectedRoute({ children, requireAdmin = false }: { children: R
     );
   }
 
-  if (!user) return <Navigate to="/login" replace />;
+  if (!user) {
+    // Se está tentando acessar admin, vai para login admin
+    if (requireAdmin) {
+      return <Navigate to="/admin/login" replace />;
+    }
+    return <Navigate to="/login" replace />;
+  }
   if (requireAdmin && !isAdmin) return <Navigate to="/" replace />;
 
   return <>{children}</>;

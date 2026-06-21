@@ -28,7 +28,9 @@ const Profile = lazy(() => import("./pages/Profile"));
 const TermsOfService = lazy(() => import("./pages/TermsOfService"));
 const PrivacyPolicy = lazy(() => import("./pages/PrivacyPolicy"));
 
+const AdminLogin = lazy(() => import("./pages/admin/AdminLogin"));
 const Dashboard = lazy(() => import("./pages/admin/Dashboard"));
+const PDV = lazy(() => import("./pages/admin/PDV"));
 const Products = lazy(() => import("./pages/admin/Products"));
 const Categories = lazy(() => import("./pages/admin/Categories"));
 const Combos = lazy(() => import("./pages/admin/Combos"));
@@ -91,6 +93,7 @@ const App = () => (
                   <Route path="/perfil" element={<ProtectedRoute><Profile /></ProtectedRoute>} />
                   <Route path="/termos" element={<TermsOfService />} />
                   <Route path="/privacidade" element={<PrivacyPolicy />} />
+                  <Route path="/admin/login" element={<AdminLogin />} />
                   <Route
                     path="/admin"
                     element={
@@ -106,6 +109,7 @@ const App = () => (
                     <Route path="categorias" element={<Categories />} />
                     <Route path="combos" element={<Combos />} />
                     <Route path="pedidos" element={<Orders />} />
+                    <Route path="pdv" element={<PDV />} />
                     <Route path="estoque" element={<Navigate to="/admin/produtos" replace />} />
                     <Route path="frete" element={<Freight />} />
                     <Route path="descontos" element={<Discounts />} />

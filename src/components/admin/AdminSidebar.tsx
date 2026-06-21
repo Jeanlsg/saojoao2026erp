@@ -1,6 +1,6 @@
-import { LayoutDashboard, Package, Tag, Flame, ShoppingCart, ArrowLeft, Truck, Percent, Newspaper, Settings } from "lucide-react";
+import { LayoutDashboard, Package, Tag, Flame, ShoppingCart, ArrowLeft, Truck, Percent, Newspaper, Settings, LogOut, Monitor } from "lucide-react";
 import { NavLink } from "@/components/NavLink";
-import { useLocation, Link } from "react-router-dom";
+import { useLocation, Link, useNavigate } from "react-router-dom";
 import {
   Sidebar,
   SidebarContent,
@@ -12,9 +12,11 @@ import {
   SidebarMenuItem,
   useSidebar,
 } from "@/components/ui/sidebar";
+import { useAuth } from "@/contexts/AuthContext";
 
 const items = [
   { title: "Dashboard", url: "/admin", icon: LayoutDashboard },
+  { title: "Frente de Caixa", url: "/admin/pdv", icon: Monitor },
   // Produtos engloba estoque (alerta + ajuste inline) — antes era uma página separada.
   { title: "Produtos", url: "/admin/produtos", icon: Package },
   { title: "Categorias", url: "/admin/categorias", icon: Tag },
@@ -30,9 +32,16 @@ export function AdminSidebar() {
   const { state } = useSidebar();
   const collapsed = state === "collapsed";
   const location = useLocation();
+  const navigate = useNavigate();
+  const { signOut } = useAuth();
 
   const isActive = (path: string) =>
     path === "/admin" ? location.pathname === "/admin" : location.pathname.startsWith(path);
+
+  const handleLogout = async () => {
+    await signOut();
+    navigate("/admin/login");
+  };
 
   return (
     <Sidebar collapsible="icon">
@@ -87,6 +96,12 @@ export function AdminSidebar() {
                     <ArrowLeft className="mr-2 h-4 w-4" />
                     {!collapsed && <span>Voltar à Loja</span>}
                   </Link>
+                </SidebarMenuButton>
+              </SidebarMenuItem>
+              <SidebarMenuItem>
+                <SidebarMenuButton onClick={handleLogout} className="hover:bg-destructive/10 hover:text-destructive cursor-pointer">
+                  <LogOut className="mr-2 h-4 w-4" />
+                  {!collapsed && <span>Sair</span>}
                 </SidebarMenuButton>
               </SidebarMenuItem>
             </SidebarMenu>

@@ -1,0 +1,11 @@
+{
+  "permissions": {
+    "allow": [
+      "Bash(git filter-repo *)",
+      "Bash(export FILTER_BRANCH_SQUELCH_WARNING=1)",
+      "Bash(git filter-branch *)",
+      "Bash(vercel whoami *)",
+      "Bash(npx tsc *)"
+    ]
+  }
+}
