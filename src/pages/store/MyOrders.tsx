@@ -3,7 +3,7 @@ import { useAuth } from "@/contexts/AuthContext";
 import { supabase } from "@/integrations/supabase/client";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
-import { Clock, ChefHat, CheckCircle2, XCircle, Package, CheckCheck } from "lucide-react";
+import { Clock, ChefHat, CheckCircle2, XCircle, Package, CheckCheck, QrCode } from "lucide-react";
 import { useNavigate } from "react-router-dom";
 import { Button } from "@/components/ui/button";
 import { BackButton } from "@/components/BackButton";
@@ -187,6 +187,19 @@ export default function MyOrders() {
                     R$ {Number(order.total).toFixed(2).replace(".", ",")}
                   </span>
                 </div>
+
+                {/* Botão QR Code de entrega - aparece quando o pedido está confirmado */}
+                {order.status === "confirmado" && order.paid && (
+                  <Button
+                    onClick={() => navigate(`/pedido/${order.id}`)}
+                    className="w-full"
+                    variant="outline"
+                    size="sm"
+                  >
+                    <QrCode className="mr-2 h-4 w-4" />
+                    Ver QR Code de Entrega
+                  </Button>
+                )}
 
                 {/* Botão "Marcar como entregue" — só aparece se:
                     1. Pedido ainda não foi entregue/cancelado

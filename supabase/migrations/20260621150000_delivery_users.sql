@@ -29,7 +29,10 @@ CREATE UNIQUE INDEX IF NOT EXISTS idx_delivery_users_phone_nonnull
 -- Colunas para rastreamento de entrega na tabela orders
 ALTER TABLE public.orders
   ADD COLUMN IF NOT EXISTS delivered_by UUID REFERENCES public.delivery_users(id),
-  ADD COLUMN IF NOT EXISTS delivered_at TIMESTAMPTZ;
+  ADD COLUMN IF NOT EXISTS delivered_at TIMESTAMPTZ,
+  ADD COLUMN IF NOT EXISTS delivery_code TEXT, -- Código de entrega (6 dígitos)
+  ADD COLUMN IF NOT EXISTS delivery_status TEXT DEFAULT 'pending', -- pending | partial | delivered
+  ADD COLUMN IF NOT EXISTS delivered_items JSONB DEFAULT '[]'::jsonb; -- Array de {productId, quantity} entregues
 
 -- RLS para delivery_users
 ALTER TABLE public.delivery_users ENABLE ROW LEVEL SECURITY;
@@ -94,3 +97,46 @@ $$;
 COMMENT ON TABLE public.delivery_users IS 'Usuários de entrega (entregadores) - vinculados ao auth.users';
 COMMENT ON COLUMN public.orders.delivered_by IS 'Entregador que confirmou a entrega';
 COMMENT ON COLUMN public.orders.delivered_at IS 'Data/hora da confirmação de entrega';
+COMMENT ON COLUMN public.orders.delivery_code IS 'Código de entrega (6 dígitos) para identificacao';
+COMMENT ON COLUMN public.orders.delivery_status IS 'Status de entrega: pending, partial, delivered';
+
+-- Policy para buscar pedido por código de entrega (público)
+CREATE OR REPLACE FUNCTION public.find_order_by_delivery_code(p_code TEXT)
+RETURNS TABLE(
+  id UUID,
+  customer_name TEXT,
+  customer_phone TEXT,
+  customer_address TEXT,
+  items JSONB,
+  total NUMERIC,
+  status TEXT,
+  payment_method TEXT,
+  paid BOOLEAN,
+  delivery_code TEXT,
+  delivery_status TEXT,
+  created_at TIMESTAMPTZ
+)
+LANGUAGE plpgsql
+SECURITY DEFINER
+SET search_path = public
+AS $$
+BEGIN
+  RETURN QUERY
+  SELECT
+    o.id,
+    o.customer_name,
+    o.customer_phone,
+    o.customer_address,
+    o.items,
+    o.total,
+    o.status,
+    o.payment_method,
+    o.paid,
+    o.delivery_code,
+    o.delivery_status,
+    o.created_at
+  FROM public.orders o
+  WHERE o.delivery_code = p_code AND o.paid = true
+  LIMIT 1;
+END;
+$$;

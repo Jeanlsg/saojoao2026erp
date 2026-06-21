@@ -100,6 +100,11 @@ export default function PDV() {
     return paid - total;
   };
 
+  // Gera código de entrega de 6 dígitos
+  const generateDeliveryCode = () => {
+    return Math.floor(100000 + Math.random() * 900000).toString();
+  };
+
   const finalizeSaleAndMarkPaid = async (paidAmount: number) => {
     if (cart.length === 0) return;
 
@@ -112,6 +117,8 @@ export default function PDV() {
 
     // Gera UUID para o id do pedido
     const orderId = crypto.randomUUID();
+    // Gera código de entrega
+    const deliveryCode = generateDeliveryCode();
 
     try {
       const { data: orderData, error: orderError } = await supabase
@@ -126,6 +133,8 @@ export default function PDV() {
           payment_method: "dinheiro",
           paid: true,
           paid_at: new Date().toISOString(),
+          delivery_code: deliveryCode,
+          delivery_status: "pending",
         })
         .select()
         .single();
@@ -158,6 +167,8 @@ export default function PDV() {
 
     // Gera UUID para o id do pedido
     const orderId = crypto.randomUUID();
+    // Gera código de entrega
+    const deliveryCode = generateDeliveryCode();
 
     try {
       const { data: orderData, error: orderError } = await supabase
@@ -172,6 +183,8 @@ export default function PDV() {
           payment_method: method,
           paid: method === "pix",
           paid_at: method === "pix" ? new Date().toISOString() : null,
+          delivery_code: deliveryCode,
+          delivery_status: "pending",
         })
         .select()
         .single();

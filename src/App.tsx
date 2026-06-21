@@ -15,6 +15,8 @@ import { useNativeThemeSync } from "@/hooks/useNativeThemeSync";
 import { usePushRegistration } from "@/hooks/usePushRegistration";
 import Index from "./pages/store/Index";
 import NotFound from "./pages/NotFound";
+import PedidoConfirmado from "./pages/PedidoConfirmado";
+import EntregaConfirmar from "./pages/EntregaConfirmar";
 import { AdminLayout } from "@/components/admin/AdminLayout";
 
 // Páginas de usuário (clientes)
@@ -105,6 +107,8 @@ const App = () => (
                   <Route path="/ofertas" element={<Ofertas />} />
                   <Route path="/meus-pedidos" element={<ProtectedRoute><MyOrders /></ProtectedRoute>} />
                   <Route path="/perfil" element={<ProtectedRoute><Profile /></ProtectedRoute>} />
+                  <Route path="/pedido/:orderId" element={<PedidoConfirmado />} />
+                  <Route path="/entrega/:orderId" element={<EntregaConfirmar />} />
                   <Route path="/termos" element={<TermsOfService />} />
                   <Route path="/privacidade" element={<PrivacyPolicy />} />
 
