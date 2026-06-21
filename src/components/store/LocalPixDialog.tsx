@@ -7,9 +7,12 @@ import { toast } from "@/hooks/use-toast";
 
 interface LocalPixDialogProps {
   open: boolean;
-  onOpenChange: (open: boolean) => void;
-  orderId: string;
-  total: number;
+  onClose?: () => void;
+  onOpenChange?: (open: boolean) => void;
+  orderId?: string;
+  amount?: number;
+  total?: number;
+  onConfirm?: () => void;
 }
 
 /**
@@ -24,10 +27,16 @@ interface LocalPixDialogProps {
  */
 export function LocalPixDialog({
   open,
+  onClose,
   onOpenChange,
   orderId,
+  amount,
   total,
+  onConfirm,
 }: LocalPixDialogProps) {
+  const finalOrderId = orderId ?? "";
+  const finalTotal = amount ?? total ?? 0;
+  const handleOpenChange = onOpenChange ?? (() => onClose?.());
   const [copied, setCopied] = useState(false);
   const [pixData, setPixData] = useState<{ brCode: string; qrCodeUrl: string } | null>(null);
 
@@ -52,7 +61,7 @@ export function LocalPixDialog({
         // txid curto = primeiros 8 chars do id do pedido
         const txid = orderId.replace(/-/g, "").substring(0, 8).toUpperCase();
 
-        const data = generatePixPayload(total, txid, pixConfig);
+        const data = generatePixPayload(finalTotal, txid, pixConfig);
 
         if (!cancelled) setPixData(data);
       } catch (err) {
@@ -67,7 +76,7 @@ export function LocalPixDialog({
 
     generate();
     return () => { cancelled = true; };
-  }, [open, orderId, total]);
+  }, [open, finalOrderId, finalTotal]);
 
   const copyBrCode = async () => {
     if (!pixData?.brCode) return;
@@ -82,14 +91,14 @@ export function LocalPixDialog({
   };
 
   return (
-    <Dialog open={open} onOpenChange={onOpenChange}>
+    <Dialog open={open} onOpenChange={handleOpenChange}>
       <DialogContent className="max-w-md">
         <DialogHeader>
           <DialogTitle className="flex items-center gap-2">
             <Smartphone className="h-5 w-5 text-primary" />
             Pagar com PIX
             <Badge variant="outline" className="ml-auto">
-              R$ {total.toFixed(2).replace(".", ",")}
+              R$ {finalTotal.toFixed(2).replace(".", ",")}
             </Badge>
           </DialogTitle>
         </DialogHeader>
@@ -102,7 +111,7 @@ export function LocalPixDialog({
               <li>Abra o app do seu banco</li>
               <li>Escolha pagar com PIX QR Code</li>
               <li>Escaneie o código abaixo</li>
-              <li>Confirme o valor de <strong>R$ {total.toFixed(2).replace(".", ",")}</strong></li>
+              <li>Confirme o valor de <strong>R$ {finalTotal.toFixed(2).replace(".", ",")}</strong></li>
               <li>Mostre o comprovante ao caixa 🍡</li>
             </ol>
           </div>
@@ -143,7 +152,7 @@ export function LocalPixDialog({
               <div className="w-full text-center text-xs text-muted-foreground space-y-1">
                 <p>
                   Pedido:{" "}
-                  <code className="text-foreground">#{orderId.slice(0, 8).toUpperCase()}</code>
+                  <code className="text-foreground">#{finalOrderId.slice(0, 8).toUpperCase()}</code>
                 </p>
                 <p className="text-[10px]">
                   Após pagar, mostre o comprovante ao caixa para confirmação.
@@ -158,14 +167,28 @@ export function LocalPixDialog({
             </div>
           )}
 
-          <Button
-            variant="ghost"
-            onClick={() => onOpenChange(false)}
-            className="w-full"
-          >
-            <X className="mr-2 h-4 w-4" />
-            Fechar
-          </Button>
+          <div className="flex gap-2">
+            {onConfirm && (
+              <Button
+                onClick={() => {
+                  onConfirm();
+                  handleOpenChange(false);
+                }}
+                className="flex-1 gap-1"
+              >
+                <Check className="mr-2 h-4 w-4" />
+                Confirmar Pagamento
+              </Button>
+            )}
+            <Button
+              variant="ghost"
+              onClick={() => handleOpenChange(false)}
+              className={onConfirm ? "" : "w-full"}
+            >
+              <X className="mr-2 h-4 w-4" />
+              Fechar
+            </Button>
+          </div>
         </div>
       </DialogContent>
     </Dialog>

@@ -1,12 +1,11 @@
 import { useState, useMemo } from "react";
 import { useAdmin } from "@/contexts/AdminContext";
-import { useStore } from "@/contexts/StoreContext";
 import { AdminLayout } from "@/components/admin/AdminLayout";
 import { LocalPixDialog } from "@/components/store/LocalPixDialog";
+import { supabase } from "@/integrations/supabase/client";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { ScrollArea } from "@/components/ui/scroll-area";
-import { Separator } from "@/components/ui/separator";
 import { Badge } from "@/components/ui/badge";
 import {
   ShoppingCart,
@@ -30,8 +29,7 @@ interface CartItem {
 }
 
 export default function PDV() {
-  const { products, categories } = useAdmin();
-  const { updateOrderPaid } = useAdmin();
+  const { products, categories, updateOrderPaid, loading } = useAdmin();
   const [cart, setCart] = useState<CartItem[]>([]);
   const [selectedCategory, setSelectedCategory] = useState<string>("all");
   const [customerName, setCustomerName] = useState("");
@@ -100,11 +98,42 @@ export default function PDV() {
     return paid - total;
   };
 
-  const handleCobrar = (method: "pix" | "dinheiro") => {
+  const finalizeSaleAndMarkPaid = async (paidAmount: number) => {
     if (cart.length === 0) return;
-    setPaymentMethod(method);
-    if (method === "pix") {
-      finalizeSale();
+
+    const items = cart.map((item) => ({
+      productName: item.productName,
+      quantity: item.quantity,
+      price: item.price,
+    }));
+
+    try {
+      const { data: orderData, error: orderError } = await supabase
+        .from("orders")
+        .insert({
+          customer_name: customerName || "Balcão",
+          customer_phone: null,
+          items,
+          total,
+          status: "confirmado",
+          payment_method: "dinheiro",
+          paid: true,
+          paid_at: new Date().toISOString(),
+        })
+        .select()
+        .single();
+
+      if (orderError) {
+        console.error("[PDV] Erro ao criar pedido:", orderError);
+        return;
+      }
+
+      setChangeValue(paidAmount - total);
+      setShowChangeModal(true);
+      setCurrentOrderId(orderData.id);
+      updateOrderPaid(orderData.id, true);
+    } catch (err) {
+      console.error("[PDV] Erro ao finalizar venda:", err);
     }
   };
 
@@ -118,11 +147,7 @@ export default function PDV() {
     }));
 
     try {
-      const { data, error } = await import("@/integrations/supabase/client").then(
-        (m) => m.supabase
-      );
-
-      const { data: orderData, error: orderError } = await data
+      const { data: orderData, error: orderError } = await supabase
         .from("orders")
         .insert({
           customer_name: customerName || "Balcão",
@@ -137,7 +162,10 @@ export default function PDV() {
         .select()
         .single();
 
-      if (orderError) throw orderError;
+      if (orderError) {
+        console.error("[PDV] Erro ao criar pedido:", orderError);
+        return;
+      }
 
       setCurrentOrderId(orderData.id);
 
@@ -149,12 +177,28 @@ export default function PDV() {
     }
   };
 
+  const handleCobrar = (method: "pix" | "dinheiro") => {
+    if (cart.length === 0) return;
+    setPaymentMethod(method);
+    if (method === "dinheiro") {
+      return;
+    }
+    finalizeSale();
+  };
+
   const handlePixConfirm = () => {
     if (currentOrderId) {
       updateOrderPaid(currentOrderId, true);
       setLastSale({ name: customerName || "Balcão", total });
-      setShowChangeModal(false);
     }
+    setPixDialogOpen(false);
+    setCart([]);
+    setCustomerName("");
+    setPaymentMethod(null);
+    setCurrentOrderId(null);
+  };
+
+  const handlePixClose = () => {
     setPixDialogOpen(false);
     setCart([]);
     setCustomerName("");
@@ -165,16 +209,11 @@ export default function PDV() {
   const handleDinheiroConfirm = () => {
     const paid = parseFloat(changeAmount) || 0;
     if (paid < total) return;
-
-    setChangeValue(paid - total);
-    setShowChangeModal(true);
+    finalizeSaleAndMarkPaid(paid);
   };
 
   const handleFinishSale = () => {
-    if (currentOrderId) {
-      updateOrderPaid(currentOrderId, true);
-      setLastSale({ name: customerName || "Balcão", total });
-    }
+    setLastSale({ name: customerName || "Balcão", total });
     setShowChangeModal(false);
     setCart([]);
     setCustomerName("");
@@ -183,6 +222,19 @@ export default function PDV() {
     setCurrentOrderId(null);
     setLastSale(null);
   };
+
+  if (loading) {
+    return (
+      <AdminLayout>
+        <div className="flex items-center justify-center h-96">
+          <div className="text-center">
+            <div className="h-8 w-8 animate-spin rounded-full border-4 border-primary border-t-transparent mx-auto mb-4" />
+            <p className="text-muted-foreground">Carregando produtos...</p>
+          </div>
+        </div>
+      </AdminLayout>
+    );
+  }
 
   return (
     <AdminLayout>
@@ -212,41 +264,49 @@ export default function PDV() {
 
           {/* Produtos */}
           <ScrollArea className="flex-1">
-            <div className="grid grid-cols-2 sm:grid-cols-3 xl:grid-cols-4 2xl:grid-cols-5 gap-3">
-              {filteredProducts.map((product) => (
-                <button
-                  key={product.id}
-                  onClick={() => addToCart(product)}
-                  className="flex flex-col items-center p-3 bg-card rounded-xl border border-border hover:border-primary hover:shadow-md transition-all active:scale-95 text-left"
-                >
-                  <div className="w-full aspect-square rounded-lg overflow-hidden bg-muted mb-2">
-                    {product.image ? (
-                      <img
-                        src={product.image}
-                        alt={product.name}
-                        className="w-full h-full object-cover"
-                        onError={(e) => {
-                          (e.target as HTMLImageElement).style.display = "none";
-                        }}
-                      />
-                    ) : (
-                      <div className="w-full h-full flex items-center justify-center text-muted-foreground text-xs">
-                        Sem foto
-                      </div>
-                    )}
-                  </div>
-                  <span className="font-medium text-sm text-center line-clamp-2 w-full">
-                    {product.name}
-                  </span>
-                  <span className="text-primary font-bold mt-1">
-                    R$ {product.promoPrice ?? product.price}
-                  </span>
-                  <Badge variant="secondary" className="mt-1 text-xs">
-                    {product.stock} un
-                  </Badge>
-                </button>
-              ))}
-            </div>
+            {filteredProducts.length === 0 ? (
+              <div className="flex flex-col items-center justify-center h-64 text-muted-foreground">
+                <ShoppingCart className="h-16 w-16 mb-4 opacity-30" />
+                <p className="text-lg font-medium">Nenhum produto disponível</p>
+                <p className="text-sm">Verifique a conexão com o banco de dados</p>
+              </div>
+            ) : (
+              <div className="grid grid-cols-2 sm:grid-cols-3 xl:grid-cols-4 2xl:grid-cols-5 gap-3">
+                {filteredProducts.map((product) => (
+                  <button
+                    key={product.id}
+                    onClick={() => addToCart(product)}
+                    className="flex flex-col items-center p-3 bg-card rounded-xl border border-border hover:border-primary hover:shadow-md transition-all active:scale-95 text-left"
+                  >
+                    <div className="w-full aspect-square rounded-lg overflow-hidden bg-muted mb-2">
+                      {product.image ? (
+                        <img
+                          src={product.image}
+                          alt={product.name}
+                          className="w-full h-full object-cover"
+                          onError={(e) => {
+                            (e.target as HTMLImageElement).style.display = "none";
+                          }}
+                        />
+                      ) : (
+                        <div className="w-full h-full flex items-center justify-center text-muted-foreground text-xs">
+                          Sem foto
+                        </div>
+                      )}
+                    </div>
+                    <span className="font-medium text-sm text-center line-clamp-2 w-full">
+                      {product.name}
+                    </span>
+                    <span className="text-primary font-bold mt-1">
+                      R$ {(product.promoPrice ?? product.price).toFixed(2).replace(".", ",")}
+                    </span>
+                    <Badge variant="secondary" className="mt-1 text-xs">
+                      {product.stock} un
+                    </Badge>
+                  </button>
+                ))}
+              </div>
+            )}
           </ScrollArea>
         </div>
 
@@ -398,13 +458,8 @@ export default function PDV() {
       {/* Dialog PIX */}
       <LocalPixDialog
         open={pixDialogOpen}
-        onClose={() => {
-          setPixDialogOpen(false);
-          setCart([]);
-          setCustomerName("");
-          setPaymentMethod(null);
-        }}
-        orderId={currentOrderId}
+        onClose={handlePixClose}
+        orderId={currentOrderId ?? undefined}
         amount={total}
         onConfirm={handlePixConfirm}
       />
@@ -435,7 +490,7 @@ export default function PDV() {
         </div>
       )}
 
-      {/* Confirmação de venda sem troco */}
+      {/* Confirmação de venda PIX */}
       {lastSale && !showChangeModal && (
         <div className="fixed bottom-4 right-4 bg-green-600 text-white rounded-xl p-4 shadow-2xl z-50 animate-in slide-in-from-bottom-4">
           <div className="flex items-center gap-3">
