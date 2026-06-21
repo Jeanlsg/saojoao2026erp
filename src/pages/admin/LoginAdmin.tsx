@@ -11,20 +11,29 @@ import { toast } from "@/hooks/use-toast";
 
 export default function LoginAdmin() {
   const navigate = useNavigate();
-  const { signInWithEmail, isAdmin: checkIsAdmin } = useAuth();
+  const { signInWithEmail } = useAuth();
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
   const [loading, setLoading] = useState(false);
   const [userType, setUserType] = useState<"admin" | "entregador" | null>(null);
 
+  // Função para verificar se o user_id é admin (consulta direta ao banco)
+  const checkIsAdmin = async (userId: string): Promise<boolean> => {
+    const { data } = await supabase
+      .from("user_roles")
+      .select("role")
+      .eq("user_id", userId)
+      .eq("role", "admin");
+    return !!(data && data.length > 0);
+  };
+
   // Detecta o tipo de usuário automaticamente após login
   const detectAndRedirect = async (userId: string) => {
     try {
       // Verifica se é admin
-      const isAdminUser = await checkIsAdmin();
+      const isAdminUser = await checkIsAdmin(userId);
       if (isAdminUser) {
         setUserType("admin");
-        // Pequeno delay para garantir que o estado foi atualizado
         setTimeout(() => {
           window.location.href = "/admin/pdv";
         }, 100);
@@ -50,7 +59,7 @@ export default function LoginAdmin() {
       // Não é nenhum dos dois
       toast({
         title: "Acesso negado",
-        description: "Esta conta não tem permissão de admin ou entregador. Use a página de login comum.",
+        description: "Esta conta não tem permissão de admin ou entregador.",
         variant: "destructive",
       });
       await supabase.auth.signOut();
