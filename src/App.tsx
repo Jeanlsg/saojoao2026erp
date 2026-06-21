@@ -6,7 +6,7 @@ import { BrowserRouter, Routes, Route, Navigate, useLocation, useNavigate } from
 import { ThemeProvider, useTheme } from "next-themes";
 import { StoreProvider } from "@/contexts/StoreContext";
 import { CartProvider } from "@/contexts/CartContext";
-import { AuthProvider } from "@/contexts/AuthContext";
+import { AuthProvider, useAuth } from "@/contexts/AuthContext";
 import { AdminProvider } from "@/contexts/AdminContext";
 import { ProtectedRoute } from "@/components/auth/ProtectedRoute";
 import { MesaProtectedRoute } from "@/components/auth/MesaProtectedRoute";
