@@ -1,6 +1,7 @@
 import { useEffect, useState } from "react";
 import { useParams, useNavigate } from "react-router-dom";
 import { supabase } from "@/integrations/supabase/client";
+import { useAuth } from "@/contexts/AuthContext";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
@@ -37,6 +38,7 @@ interface Order {
 export default function EntregaConfirmar() {
   const { orderId } = useParams<{ orderId: string }>();
   const navigate = useNavigate();
+  const { isAdmin } = useAuth();
   const [order, setOrder] = useState<Order | null>(null);
   const [loading, setLoading] = useState(true);
   const [confirming, setConfirming] = useState(false);
@@ -113,17 +115,27 @@ export default function EntregaConfirmar() {
       return;
     }
 
-    const { data: deliveryUser, error: deliveryError } = await supabase
-      .from("delivery_users")
-      .select("*")
-      .eq("user_id", user.id)
-      .eq("active", true)
-      .single();
+    // Admin sempre pode confirmar, sem precisar ser delivery_user
+    // Se não for admin, verifica se é delivery_user
+    let deliveryUserId: string | null = null;
 
-    if (deliveryError || !deliveryUser) {
-      toast({ title: "Acesso negado", description: "Você não tem permissão para confirmar entregas.", variant: "destructive" });
-      setConfirming(false);
-      return;
+    if (isAdmin) {
+      // Admin pode confirmar sem ser vinculado
+      deliveryUserId = null;
+    } else {
+      const { data: deliveryUser, error: deliveryError } = await supabase
+        .from("delivery_users")
+        .select("*")
+        .eq("user_id", user.id)
+        .eq("active", true)
+        .single();
+
+      if (deliveryError || !deliveryUser) {
+        toast({ title: "Acesso negado", description: "Você não tem permissão para confirmar entregas.", variant: "destructive" });
+        setConfirming(false);
+        return;
+      }
+      deliveryUserId = deliveryUser.id;
     }
 
     // Acumula os itens entregues
@@ -147,15 +159,21 @@ export default function EntregaConfirmar() {
     const newStatus = allItemsDelivered ? "entregue" : order.status;
     const newDeliveryStatus = allItemsDelivered ? "delivered" : "partial";
 
+    const updateData: any = {
+      status: newStatus,
+      delivery_status: newDeliveryStatus,
+      delivered_at: allItemsDelivered ? new Date().toISOString() : order.delivered_at,
+      delivered_items: allDelivered,
+    };
+
+    // Só seta delivered_by se houver um delivery_user_id
+    if (deliveryUserId) {
+      updateData.delivered_by = deliveryUserId;
+    }
+
     const { error: updateError } = await supabase
       .from("orders")
-      .update({
-        status: newStatus,
-        delivery_status: newDeliveryStatus,
-        delivered_by: deliveryUser.id,
-        delivered_at: allItemsDelivered ? new Date().toISOString() : order.delivered_at,
-        delivered_items: allDelivered,
-      })
+      .update(updateData)
       .eq("id", order.id);
 
     if (updateError) {
@@ -183,28 +201,41 @@ export default function EntregaConfirmar() {
       return;
     }
 
-    const { data: deliveryUser, error: deliveryError } = await supabase
-      .from("delivery_users")
-      .select("*")
-      .eq("user_id", user.id)
-      .eq("active", true)
-      .single();
+    // Admin sempre pode confirmar
+    let deliveryUserId: string | null = null;
 
-    if (deliveryError || !deliveryUser) {
-      toast({ title: "Acesso negado", description: "Você não tem permissão para confirmar entregas.", variant: "destructive" });
-      setConfirming(false);
-      return;
+    if (isAdmin) {
+      deliveryUserId = null;
+    } else {
+      const { data: deliveryUser, error: deliveryError } = await supabase
+        .from("delivery_users")
+        .select("*")
+        .eq("user_id", user.id)
+        .eq("active", true)
+        .single();
+
+      if (deliveryError || !deliveryUser) {
+        toast({ title: "Acesso negado", description: "Você não tem permissão para confirmar entregas.", variant: "destructive" });
+        setConfirming(false);
+        return;
+      }
+      deliveryUserId = deliveryUser.id;
+    }
+
+    const updateData: any = {
+      status: "entregue",
+      delivery_status: "delivered",
+      delivered_at: new Date().toISOString(),
+      delivered_items: order.items,
+    };
+
+    if (deliveryUserId) {
+      updateData.delivered_by = deliveryUserId;
     }
 
     const { error: updateError } = await supabase
       .from("orders")
-      .update({
-        status: "entregue",
-        delivery_status: "delivered",
-        delivered_by: deliveryUser.id,
-        delivered_at: new Date().toISOString(),
-        delivered_items: order.items,
-      })
+      .update(updateData)
       .eq("id", order.id);
 
     if (updateError) {

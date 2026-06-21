@@ -12,7 +12,7 @@ import { ChevronLeft, X } from "lucide-react";
 import { LegalFooter } from "@/components/LegalFooter";
 
 export default function Login() {
-  const { user, loading, signInWithEmail, signUpWithEmail, signInWithGoogle } = useAuth();
+  const { user, loading, isAdmin, signInWithEmail, signUpWithEmail, signInWithGoogle } = useAuth();
   const { toast } = useToast();
   const navigate = useNavigate();
   const [isSignUp, setIsSignUp] = useState(false);
@@ -23,12 +23,18 @@ export default function Login() {
   const [submitting, setSubmitting] = useState(false);
   const [redirecting, setRedirecting] = useState(false);
 
-  // Verifica se é entregador e redireciona após login
+  // Redireciona após login baseado no tipo de usuário
   useEffect(() => {
-    const checkDeliveryAndRedirect = async () => {
+    const redirectAfterLogin = async () => {
       if (!user || redirecting) return;
 
       setRedirecting(true);
+
+      // Admin → painel admin (PDV)
+      if (isAdmin) {
+        navigate("/admin/pdv", { replace: true });
+        return;
+      }
 
       // Verifica se é entregador
       const { data } = await supabase
@@ -42,15 +48,15 @@ export default function Login() {
         // É entregador → vai para área de entregas
         navigate("/admin/entregas", { replace: true });
       } else {
-        // Não é entregador → vai para loja
+        // Cliente normal → vai para loja
         navigate("/", { replace: true });
       }
     };
 
     if (user && submitting) {
-      checkDeliveryAndRedirect();
+      redirectAfterLogin();
     }
-  }, [user, submitting]);
+  }, [user, submitting, isAdmin]);
 
   if (loading) {
     return (
@@ -117,7 +123,7 @@ export default function Login() {
         <Card className="w-full max-w-sm">
         <CardHeader className="text-center">
           <img
-            src="/logo-escola.png"
+            src="/icon.png"
             alt="Escola Raul Pompéia"
             className="h-20 w-auto mx-auto mb-2 object-contain"
           />

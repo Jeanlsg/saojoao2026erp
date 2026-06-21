@@ -77,8 +77,8 @@ function fireBrowserNotification(title: string, body: string) {
     if (Notification.permission !== "granted") return;
     new Notification(title, {
       body,
-      icon: "/logo-escola.png",
-      badge: "/logo-escola.png",
+      icon: "/icon.png",
+      badge: "/icon.png",
       tag: "novo-pedido",
       requireInteraction: false,
     });

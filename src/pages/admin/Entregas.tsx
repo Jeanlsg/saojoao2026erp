@@ -43,7 +43,7 @@ interface DeliveryUser {
 
 export default function Entregas() {
   const navigate = useNavigate();
-  const { user: authUser, signOut } = useAuth();
+  const { user: authUser, isAdmin, signOut } = useAuth();
   const [deliveryUser, setDeliveryUser] = useState<DeliveryUser | null>(null);
   const [orders, setOrders] = useState<Order[]>([]);
   const [loading, setLoading] = useState(true);
@@ -58,6 +58,12 @@ export default function Entregas() {
   const checkAccess = async () => {
     if (!authUser) {
       navigate("/login");
+      return;
+    }
+
+    // Admin não tem acesso a esta página — redireciona para pedidos
+    if (isAdmin) {
+      navigate("/admin/pedidos", { replace: true });
       return;
     }
 
@@ -102,7 +108,7 @@ export default function Entregas() {
 
   const handleLogout = async () => {
     await signOut();
-    navigate("/login");
+    navigate(isAdmin ? "/admin/login" : "/login");
   };
 
   const handleConfirmDelivery = async (orderId: string) => {

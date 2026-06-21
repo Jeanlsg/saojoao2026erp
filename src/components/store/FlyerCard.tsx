@@ -102,7 +102,7 @@ export function FlyerPage({
           )}
         </div>
         <div className="flex items-center gap-1.5 ml-2 shrink-0">
-          <img src="/logo-escola.png" alt={storeName} className="h-10 sm:h-12 w-auto object-contain bg-white rounded p-0.5" />
+          <img src="/icon.png" alt={storeName} className="h-10 sm:h-12 w-auto object-contain bg-white rounded p-0.5" />
         </div>
       </div>
 

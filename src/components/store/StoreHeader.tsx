@@ -31,7 +31,7 @@ export function StoreHeader() {
         {/* Logo + Address */}
         <div className="flex items-center gap-2 sm:gap-3 min-w-0">
           <img
-            src="/logo-escola.png"
+            src="/icon.png"
             alt="Escola Raul Pompéia"
             className="h-12 w-auto sm:h-16 shrink-0 object-contain"
           />

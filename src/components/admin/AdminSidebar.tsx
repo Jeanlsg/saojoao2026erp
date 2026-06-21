@@ -1,4 +1,4 @@
-import { LayoutDashboard, Package, Tag, Flame, ShoppingCart, ArrowLeft, Truck, Percent, Newspaper, Settings, LogOut, Monitor, Users, PackageCheck } from "lucide-react";
+import { LayoutDashboard, Package, Tag, Flame, ShoppingCart, ArrowLeft, Truck, Percent, Newspaper, Settings, LogOut, Monitor, Users } from "lucide-react";
 import { NavLink } from "@/components/NavLink";
 import { useLocation, Link, useNavigate } from "react-router-dom";
 import {
@@ -22,7 +22,6 @@ const items = [
   { title: "Categorias", url: "/admin/categorias", icon: Tag },
   { title: "Combos", url: "/admin/combos", icon: Flame },
   { title: "Pedidos", url: "/admin/pedidos", icon: ShoppingCart },
-  { title: "Entregas", url: "/admin/entregas", icon: PackageCheck },
   { title: "Entregadores", url: "/admin/entregadores", icon: Users },
   { title: "Frete", url: "/admin/frete", icon: Truck },
   { title: "Descontos", url: "/admin/descontos", icon: Percent },
@@ -52,7 +51,7 @@ export function AdminSidebar() {
           <SidebarGroupLabel className="h-auto pt-[calc(env(safe-area-inset-top)+0.5rem)] pb-2 px-2">
             <div className={`flex items-center gap-2 min-w-0 ${collapsed ? "justify-center" : ""}`}>
               <img
-                src="/logo-escola.png"
+                src="/icon.png"
                 alt="Escola Raul Pompéia"
                 className={`object-contain shrink-0 ${collapsed ? "h-8 w-8" : "h-9 w-9"}`}
               />

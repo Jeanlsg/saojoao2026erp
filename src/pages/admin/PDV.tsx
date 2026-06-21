@@ -17,7 +17,6 @@ import {
   Check,
   User,
   X,
-  Printer,
   CreditCard,
 } from "lucide-react";
 
@@ -565,7 +564,7 @@ export default function PDV() {
       {showChangeModal && (
         <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-50">
           <div className="bg-card rounded-2xl p-6 w-80 text-center space-y-4">
-            <Printer className="h-12 w-12 mx-auto text-primary" />
+            <Check className="h-12 w-12 mx-auto text-green-600" />
             <h2 className="text-xl font-bold">Venda Concluída!</h2>
             <p className="text-muted-foreground">
               Troco: <span className="font-bold text-2xl text-primary">R$ {changeValue.toFixed(2).replace(".", ",")}</span>
@@ -573,16 +572,10 @@ export default function PDV() {
             <p className="text-sm text-muted-foreground">
               Cliente: {customerName || "Balcão"}
             </p>
-            <div className="flex gap-2 pt-2">
-              <Button variant="outline" className="flex-1 gap-1" onClick={() => window.print()}>
-                <Printer className="h-4 w-4" />
-                Imprimir
-              </Button>
-              <Button className="flex-1 gap-1" onClick={handleFinishSale}>
-                <Check className="h-4 w-4" />
-                Novo
-              </Button>
-            </div>
+            <Button className="w-full gap-1" onClick={handleFinishSale}>
+              <Check className="h-4 w-4" />
+              Nova Venda
+            </Button>
           </div>
         </div>
       )}
