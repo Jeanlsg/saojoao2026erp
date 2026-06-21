@@ -19,36 +19,47 @@ export default function LoginAdmin() {
 
   // Detecta o tipo de usuário automaticamente após login
   const detectAndRedirect = async (userId: string) => {
-    // Verifica se é admin
-    const isAdminUser = await checkIsAdmin();
-    if (isAdminUser) {
-      setUserType("admin");
-      navigate("/admin/pdv", { replace: true });
-      return;
+    try {
+      // Verifica se é admin
+      const isAdminUser = await checkIsAdmin();
+      if (isAdminUser) {
+        setUserType("admin");
+        // Pequeno delay para garantir que o estado foi atualizado
+        setTimeout(() => {
+          window.location.href = "/admin/pdv";
+        }, 100);
+        return;
+      }
+
+      // Se não é admin, verifica se é entregador
+      const { data: delivery } = await supabase
+        .from("delivery_users")
+        .select("id, active")
+        .eq("user_id", userId)
+        .eq("active", true)
+        .single();
+
+      if (delivery) {
+        setUserType("entregador");
+        setTimeout(() => {
+          window.location.href = "/admin/entregas";
+        }, 100);
+        return;
+      }
+
+      // Não é nenhum dos dois
+      toast({
+        title: "Acesso negado",
+        description: "Esta conta não tem permissão de admin ou entregador. Use a página de login comum.",
+        variant: "destructive",
+      });
+      await supabase.auth.signOut();
+      setLoading(false);
+    } catch (err) {
+      console.error("Erro ao detectar tipo de usuário:", err);
+      toast({ title: "Erro", description: "Tente novamente.", variant: "destructive" });
+      setLoading(false);
     }
-
-    // Se não é admin, verifica se é entregador
-    const { data: delivery } = await supabase
-      .from("delivery_users")
-      .select("id, active")
-      .eq("user_id", userId)
-      .eq("active", true)
-      .single();
-
-    if (delivery) {
-      setUserType("entregador");
-      navigate("/admin/entregas", { replace: true });
-      return;
-    }
-
-    // Não é nenhum dos dois
-    toast({
-      title: "Acesso negado",
-      description: "Esta conta não tem permissão de admin ou entregador. Use a página de login comum.",
-      variant: "destructive",
-    });
-    // Volta para a loja
-    navigate("/", { replace: true });
   };
 
   const handleEmailLogin = async (e: React.FormEvent) => {

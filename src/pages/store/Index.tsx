@@ -7,7 +7,7 @@ import { CategoryBar } from "@/components/store/CategoryBar";
 import { SearchBar, ViewMode } from "@/components/store/SearchBar";
 import { ProductCard } from "@/components/store/ProductCard";
 import { ProductListItem } from "@/components/store/ProductListItem";
-import { WelcomeSignupDialog } from "@/components/store/WelcomeSignupDialog";
+// import { WelcomeSignupDialog } from "@/components/store/WelcomeSignupDialog"; // Pop-up desativado
 import { ComboSuggestionDialog } from "@/components/store/ComboSuggestionDialog";
 import { BottomNav } from "@/components/store/BottomNav";
 import { LegalFooter } from "@/components/LegalFooter";
@@ -107,7 +107,7 @@ const Index = () => {
         )}
       </main>
 
-      <WelcomeSignupDialog />
+      {/* <WelcomeSignupDialog /> */}
       <ComboSuggestionDialog />
       <LegalFooter />
       <BottomNav />
