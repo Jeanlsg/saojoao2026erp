@@ -20,6 +20,8 @@ import {
   Utensils,
   CreditCard,
 } from "lucide-react";
+import { useToast } from "@/hooks/use-toast";
+import { haptOk, haptErr } from "@/lib/haptics";
 
 interface CartItem {
   productId: string;
@@ -31,6 +33,7 @@ interface CartItem {
 
 export default function PDV() {
   const { products, categories, loading: adminLoading } = useAdmin();
+  const { toast } = useToast();
   const [cart, setCart] = useState<CartItem[]>([]);
   const [selectedCategory, setSelectedCategory] = useState<string>("all");
   const [customerName, setCustomerName] = useState("");
@@ -43,6 +46,7 @@ export default function PDV() {
   const [showChangeModal, setShowChangeModal] = useState(false);
   const [changeValue, setChangeValue] = useState(0);
   const [showCardModal, setShowCardModal] = useState(false);
+  const [submitting, setSubmitting] = useState(false);
 
   const total = useMemo(
     () => cart.reduce((sum, item) => sum + item.price * item.quantity, 0),
@@ -240,6 +244,8 @@ export default function PDV() {
   const finalizeCardSale = async (cardType: "credito" | "debito") => {
     if (cart.length === 0) return;
 
+    setSubmitting(true);
+
     const items = cart.map((item) => ({
       productId: item.productId,
       productName: item.productName,
@@ -248,6 +254,8 @@ export default function PDV() {
     }));
 
     const orderId = crypto.randomUUID();
+    // Gera código de entrega
+    const deliveryCode = generateDeliveryCode();
 
     try {
       const orderData: any = {
@@ -260,6 +268,8 @@ export default function PDV() {
         payment_method: cardType,
         paid: true,
         paid_at: new Date().toISOString(),
+        delivery_code: deliveryCode,
+        delivery_status: "pending",
       };
 
       // Adiciona table_number se existir
@@ -275,19 +285,35 @@ export default function PDV() {
 
       if (orderError) {
         console.error("[PDV] Erro ao criar pedido:", orderError);
-        alert(`Erro ao criar pedido: ${orderError.message}`);
+        toast({
+          title: "Erro ao criar pedido",
+          description: orderError.message,
+          variant: "destructive",
+        });
         return;
       }
 
+      haptOk();
+      toast({
+        title: "✅ Venda confirmada!",
+        description: `Pedido #${orderId.slice(0, 8).toUpperCase()} - ${cardType === "credito" ? "Crédito" : "Débito"}`,
+      });
       setLastSale({ name: customerName || "Balcão", total });
       setShowCardModal(false);
       setCart([]);
       setCustomerName("");
       setTableNumber("");
       setPaymentMethod(null);
+      setSubmitting(false);
     } catch (err: any) {
       console.error("[PDV] Erro ao finalizar venda:", err);
-      alert(`Erro: ${err?.message || "desconhecido"}`);
+      haptErr();
+      toast({
+        title: "Erro",
+        description: err.message || "Erro desconhecido",
+        variant: "destructive",
+      });
+      setSubmitting(false);
     }
   };
 
