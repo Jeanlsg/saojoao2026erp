@@ -4,6 +4,8 @@ import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Switch } from "@/components/ui/switch";
 import { Label } from "@/components/ui/label";
 import { Button } from "@/components/ui/button";
+import { Input } from "@/components/ui/input";
+import { Textarea } from "@/components/ui/textarea";
 import {
   Settings as SettingsIcon,
   Volume2,
@@ -17,6 +19,10 @@ import {
   Database,
   Loader2,
   Radio,
+  Calendar,
+  Clock,
+  MapPin,
+  PartyPopper,
 } from "lucide-react";
 import { useToast } from "@/hooks/use-toast";
 import { useNotificationPreferences } from "@/hooks/useNotificationPreferences";
@@ -30,6 +36,15 @@ export default function Settings() {
   const { toast } = useToast();
   const [autoAccept, setAutoAccept] = useState(false);
   const [loading, setLoading] = useState(true);
+
+  // === Estado do evento ===
+  const [eventName, setEventName] = useState("Arraiá da Escola Raul Pompéia");
+  const [eventDate, setEventDate] = useState("");
+  const [eventStartTime, setEventStartTime] = useState("");
+  const [eventEndTime, setEventEndTime] = useState("");
+  const [eventLocation, setEventLocation] = useState("R. do Cobalto, 175 - Dom Avelar, Petrolina - PE");
+  const [eventDescription, setEventDescription] = useState("");
+  const [savingEvent, setSavingEvent] = useState(false);
 
   const { prefs, update, requestBrowserPermission, requestMobilePermission } =
     useNotificationPreferences();
@@ -49,6 +64,7 @@ export default function Settings() {
   const [rtError, setRtError] = useState<string | null>(null);
 
   useEffect(() => {
+    // Carrega auto_accept_orders
     db.from("store_settings")
       .select("*")
       .eq("key", "auto_accept_orders")
@@ -57,7 +73,68 @@ export default function Settings() {
         if (data) setAutoAccept(data.value === "true");
         setLoading(false);
       });
+
+    // Carrega configurações do evento
+    loadEventSettings();
   }, []);
+
+  const loadEventSettings = async () => {
+    const { data } = await db
+      .from("store_settings")
+      .select("*")
+      .in("key", [
+        "event_name",
+        "event_date",
+        "event_start_time",
+        "event_end_time",
+        "event_location",
+        "event_description",
+      ]);
+
+    if (data) {
+      data.forEach((row: any) => {
+        if (row.key === "event_name") setEventName(row.value || "Arraiá da Escola Raul Pompéia");
+        if (row.key === "event_date") setEventDate(row.value || "");
+        if (row.key === "event_start_time") setEventStartTime(row.value || "");
+        if (row.key === "event_end_time") setEventEndTime(row.value || "");
+        if (row.key === "event_location") setEventLocation(row.value || "R. do Cobalto, 175 - Dom Avelar, Petrolina - PE");
+        if (row.key === "event_description") setEventDescription(row.value || "");
+      });
+    }
+  };
+
+  const handleSaveEvent = async () => {
+    setSavingEvent(true);
+    try {
+      const settings = [
+        { key: "event_name", value: eventName },
+        { key: "event_date", value: eventDate },
+        { key: "event_start_time", value: eventStartTime },
+        { key: "event_end_time", value: eventEndTime },
+        { key: "event_location", value: eventLocation },
+        { key: "event_description", value: eventDescription },
+      ];
+
+      for (const s of settings) {
+        const { error } = await db.from("store_settings").upsert(
+          { key: s.key, value: s.value, updated_at: new Date().toISOString() },
+          { onConflict: "key" }
+        );
+        if (error) throw error;
+      }
+
+      toast({ title: "✓ Configurações do evento salvas!" });
+    } catch (err: any) {
+      console.error("Erro ao salvar evento:", err);
+      toast({
+        title: "Erro",
+        description: err.message,
+        variant: "destructive",
+      });
+    } finally {
+      setSavingEvent(false);
+    }
+  };
 
   const handleAutoAccept = async (checked: boolean) => {
     setAutoAccept(checked);
@@ -178,6 +255,144 @@ export default function Settings() {
         <SettingsIcon className="h-5 w-5 sm:h-6 sm:w-6 text-primary" />
         <h2 className="text-xl sm:text-2xl font-bold">Configurações</h2>
       </div>
+
+      {/* === Configurações do Evento === */}
+      <Card>
+        <CardHeader className="pb-3">
+          <CardTitle className="text-sm sm:text-base flex items-center gap-2">
+            <PartyPopper className="h-4 w-4 text-primary" />
+            Configurações do Evento
+          </CardTitle>
+        </CardHeader>
+        <CardContent className="space-y-4">
+          {/* Nome do evento */}
+          <div className="space-y-1">
+            <Label htmlFor="event-name" className="flex items-center gap-2">
+              <PartyPopper className="h-3.5 w-3.5" />
+              Nome do Evento
+            </Label>
+            <Input
+              id="event-name"
+              value={eventName}
+              onChange={(e) => setEventName(e.target.value)}
+              placeholder="Arraiá da Escola Raul Pompéia"
+            />
+          </div>
+
+          {/* Data e horários */}
+          <div className="grid grid-cols-1 sm:grid-cols-3 gap-3">
+            <div className="space-y-1">
+              <Label htmlFor="event-date" className="flex items-center gap-2">
+                <Calendar className="h-3.5 w-3.5" />
+                Data
+              </Label>
+              <Input
+                id="event-date"
+                type="date"
+                value={eventDate}
+                onChange={(e) => setEventDate(e.target.value)}
+              />
+            </div>
+            <div className="space-y-1">
+              <Label htmlFor="event-start" className="flex items-center gap-2">
+                <Clock className="h-3.5 w-3.5" />
+                Início
+              </Label>
+              <Input
+                id="event-start"
+                type="time"
+                value={eventStartTime}
+                onChange={(e) => setEventStartTime(e.target.value)}
+              />
+            </div>
+            <div className="space-y-1">
+              <Label htmlFor="event-end" className="flex items-center gap-2">
+                <Clock className="h-3.5 w-3.5" />
+                Término
+              </Label>
+              <Input
+                id="event-end"
+                type="time"
+                value={eventEndTime}
+                onChange={(e) => setEventEndTime(e.target.value)}
+              />
+            </div>
+          </div>
+
+          {/* Local */}
+          <div className="space-y-1">
+            <Label htmlFor="event-location" className="flex items-center gap-2">
+              <MapPin className="h-3.5 w-3.5" />
+              Local
+            </Label>
+            <Input
+              id="event-location"
+              value={eventLocation}
+              onChange={(e) => setEventLocation(e.target.value)}
+              placeholder="Endereço do evento"
+            />
+          </div>
+
+          {/* Descrição */}
+          <div className="space-y-1">
+            <Label htmlFor="event-description">Descrição (opcional)</Label>
+            <Textarea
+              id="event-description"
+              value={eventDescription}
+              onChange={(e) => setEventDescription(e.target.value)}
+              placeholder="Informações adicionais sobre o evento..."
+              rows={3}
+            />
+          </div>
+
+          {/* Preview do evento */}
+          {(eventName || eventDate || eventStartTime) && (
+            <div className="bg-primary/5 border border-primary/20 rounded-lg p-3 space-y-1">
+              <p className="text-xs text-muted-foreground">Preview:</p>
+              <p className="font-bold">{eventName || "Nome do Evento"}</p>
+              {eventDate && (
+                <p className="text-sm text-muted-foreground">
+                  📅 {new Date(eventDate + "T00:00:00").toLocaleDateString("pt-BR", {
+                    weekday: "long",
+                    day: "numeric",
+                    month: "long",
+                    year: "numeric",
+                  })}
+                </p>
+              )}
+              {(eventStartTime || eventEndTime) && (
+                <p className="text-sm text-muted-foreground">
+                  🕐 {eventStartTime} {eventEndTime && `até ${eventEndTime}`}
+                </p>
+              )}
+              {eventLocation && (
+                <p className="text-sm text-muted-foreground">📍 {eventLocation}</p>
+              )}
+            </div>
+          )}
+
+          {/* Botão salvar */}
+          <div className="pt-2 border-t border-border flex justify-end">
+            <Button
+              onClick={handleSaveEvent}
+              disabled={savingEvent}
+              className="gap-1.5"
+            >
+              {savingEvent ? (
+                <>
+                  <Loader2 className="h-3.5 w-3.5 animate-spin" />
+                  Salvando...
+                </>
+              ) : (
+                <>
+                  <Check className="h-3.5 w-3.5" />
+                  Salvar configurações
+                </>
+              )}
+            </Button>
+          </div>
+        </CardContent>
+      </Card>
 
       {/* === Notificações === */}
       <Card>
