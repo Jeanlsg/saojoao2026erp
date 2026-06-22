@@ -5,7 +5,8 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
-import { Bell, Settings as SettingsIcon, Package, QrCode, Check, CreditCard } from "lucide-react";
+import { Bell, Settings as SettingsIcon, Package, QrCode, Check, CreditCard, AlertCircle, CheckCircle2, X } from "lucide-react";
+import { Dialog, DialogContent, DialogDescription, DialogFooter, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 import { Link } from "react-router-dom";
 import { DeliveryDialog } from "@/components/admin/DeliveryDialog";
 import { useToast } from "@/hooks/use-toast";
@@ -45,6 +46,10 @@ export default function Orders() {
   const [newOrderIds, setNewOrderIds] = useState<Set<string>>(new Set());
   const [deliveryDialogOpen, setDeliveryDialogOpen] = useState(false);
   const [selectedDeliveryOrder, setSelectedDeliveryOrder] = useState<DeliveryOrder | null>(null);
+  const [cancelDialogOpen, setCancelDialogOpen] = useState(false);
+  const [orderToCancel, setOrderToCancel] = useState<Order | null>(null);
+  const [cancelType, setCancelType] = useState<"reembolso" | "pendente">("reembolso");
+  const [cancelling, setCancelling] = useState(false);
 
   // Register new order callback
   useEffect(() => {
@@ -116,6 +121,55 @@ export default function Orders() {
   const handleDeliveryUpdated = () => {
     // Atualização em tempo real via Realtime do AdminContext
     // Não recarrega a página para manter o admin na aba atual
+  };
+
+  const handleOpenCancel = (order: Order) => {
+    setOrderToCancel(order);
+    // Se o pedido já foi pago, sugere reembolso por padrão
+    setCancelType(order.paid ? "reembolso" : "pendente");
+    setCancelDialogOpen(true);
+  };
+
+  const handleConfirmCancel = async () => {
+    if (!orderToCancel) return;
+    setCancelling(true);
+
+    try {
+      const updateData: any = {
+        status: "cancelado",
+        // Se for reembolso, marca paid=false (e o trigger devolve estoque)
+        // Se for pendente, mantém paid=true (estoque já baixado, aguardando reembolso manual)
+        paid: cancelType === "reembolso" ? false : orderToCancel.paid,
+        cancellation_type: cancelType,
+        cancelled_at: new Date().toISOString(),
+      };
+
+      const { error } = await supabase
+        .from("orders")
+        .update(updateData)
+        .eq("id", orderToCancel.id);
+
+      if (error) throw error;
+
+      toast({
+        title: cancelType === "reembolso" ? "✓ Pedido cancelado e reembolsado" : "⚠ Pedido cancelado - reembolso pendente",
+        description: cancelType === "reembolso"
+          ? "Estoque devolvido e pagamento estornado."
+          : "Estoque devolvido. Realize o reembolso manualmente.",
+      });
+
+      setCancelDialogOpen(false);
+      setOrderToCancel(null);
+    } catch (err: any) {
+      console.error("Erro ao cancelar pedido:", err);
+      toast({
+        title: "Erro",
+        description: err.message,
+        variant: "destructive",
+      });
+    } finally {
+      setCancelling(false);
+    }
   };
 
   return (
@@ -370,14 +424,25 @@ export default function Orders() {
                       </div>
                     </TableCell>
                     <TableCell>
-                      <Select value={order.status} onValueChange={(v) => updateOrderStatus(order.id, v as Order["status"])}>
+                      <Select
+                        value={order.status}
+                        onValueChange={(v) => {
+                          if (v === "cancelado") {
+                            handleOpenCancel(order);
+                          } else {
+                            updateOrderStatus(order.id, v as Order["status"]);
+                          }
+                        }}
+                      >
                         <SelectTrigger className="h-11 text-xs"><SelectValue /></SelectTrigger>
                         <SelectContent>
                           <SelectItem value="pendente">Pendente</SelectItem>
                           <SelectItem value="confirmado">Pago</SelectItem>
                           <SelectItem value="preparando">Preparando</SelectItem>
                           <SelectItem value="entregue">Entregue</SelectItem>
-                          <SelectItem value="cancelado">Cancelado</SelectItem>
+                          <SelectItem value="cancelado" className="text-destructive">
+                            ✕ Cancelar pedido
+                          </SelectItem>
                         </SelectContent>
                       </Select>
                     </TableCell>
@@ -409,6 +474,88 @@ export default function Orders() {
         onClose={() => setDeliveryDialogOpen(false)}
         onUpdated={handleDeliveryUpdated}
       />
+
+      {/* Cancel Dialog */}
+      <Dialog open={cancelDialogOpen} onOpenChange={setCancelDialogOpen}>
+        <DialogContent>
+          <DialogHeader>
+            <DialogTitle className="flex items-center gap-2">
+              <X className="h-5 w-5 text-destructive" />
+              Cancelar Pedido
+            </DialogTitle>
+            <DialogDescription>
+              {orderToCancel && (
+                <span>
+                  Pedido <code className="font-mono">#{orderToCancel.id.slice(0, 8).toUpperCase()}</code> de{" "}
+                  <strong>{orderToCancel.customerName}</strong> —{" "}
+                  <strong>R$ {orderToCancel.total.toFixed(2).replace(".", ",")}</strong>
+                </span>
+              )}
+            </DialogDescription>
+          </DialogHeader>
+
+          {orderToCancel?.paid ? (
+            // Pedido já foi pago: oferece reembolso
+            <div className="space-y-3 py-3">
+              <p className="text-sm">
+                Este pedido <strong>já foi pago</strong>. Como deseja proceder?
+              </p>
+              <div className="space-y-2">
+                <button
+                  type="button"
+                  onClick={() => setCancelType("reembolso")}
+                  className={`w-full text-left p-3 rounded-lg border-2 transition-colors ${
+                    cancelType === "reembolso"
+                      ? "border-green-500 bg-green-50 dark:bg-green-950/30"
+                      : "border-border"
+                  }`}
+                >
+                  <div className="flex items-center gap-2 font-medium">
+                    <CheckCircle2 className="h-4 w-4 text-green-600" />
+                    Cancelar e Reembolsar
+                  </div>
+                  <p className="text-xs text-muted-foreground mt-1 ml-6">
+                    Marca como não pago. Estoque devolvido automaticamente.
+                  </p>
+                </button>
+                <button
+                  type="button"
+                  onClick={() => setCancelType("pendente")}
+                  className={`w-full text-left p-3 rounded-lg border-2 transition-colors ${
+                    cancelType === "pendente"
+                      ? "border-amber-500 bg-amber-50 dark:bg-amber-950/30"
+                      : "border-border"
+                  }`}
+                >
+                  <div className="flex items-center gap-2 font-medium">
+                    <AlertCircle className="h-4 w-4 text-amber-600" />
+                    Cancelar - Reembolso Pendente
+                  </div>
+                  <p className="text-xs text-muted-foreground mt-1 ml-6">
+                    Mantém pago. Estoque devolvido. Reembolso manual depois.
+                  </p>
+                </button>
+              </div>
+            </div>
+          ) : (
+            // Pedido não foi pago: cancelamento simples
+            <div className="py-3">
+              <p className="text-sm">
+                Este pedido <strong>ainda não foi pago</strong>. O cancelamento apenas marca o status.
+              </p>
+            </div>
+          )}
+
+          <DialogFooter>
+            <Button variant="outline" onClick={() => setCancelDialogOpen(false)} disabled={cancelling}>
+              Voltar
+            </Button>
+            <Button variant="destructive" onClick={handleConfirmCancel} disabled={cancelling}>
+              {cancelling ? "Cancelando..." : "Confirmar cancelamento"}
+            </Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
     </div>
   );
 }

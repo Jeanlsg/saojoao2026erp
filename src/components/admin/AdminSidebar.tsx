@@ -20,12 +20,12 @@ const items = [
   // Produtos engloba estoque (alerta + ajuste inline) — antes era uma página separada.
   { title: "Produtos", url: "/admin/produtos", icon: Package },
   { title: "Categorias", url: "/admin/categorias", icon: Tag },
-  { title: "Combos", url: "/admin/combos", icon: Flame },
+  // { title: "Combos", url: "/admin/combos", icon: Flame }, // Oculto: não está sendo usado
   { title: "Pedidos", url: "/admin/pedidos", icon: ShoppingCart },
   { title: "Entregadores", url: "/admin/entregadores", icon: Users },
-  { title: "Frete", url: "/admin/frete", icon: Truck },
-  { title: "Descontos", url: "/admin/descontos", icon: Percent },
-  { title: "Jornais", url: "/admin/jornais", icon: Newspaper },
+  // { title: "Frete", url: "/admin/frete", icon: Truck }, // Oculto: não está sendo usado
+  // { title: "Descontos", url: "/admin/descontos", icon: Percent }, // Oculto: não está sendo usado
+  // { title: "Jornais", url: "/admin/jornais", icon: Newspaper }, // Oculto: não está sendo usado
   { title: "Configurações", url: "/admin/configuracoes", icon: Settings },
 ];
 
