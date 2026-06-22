@@ -5,7 +5,7 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
-import { Bell, Settings as SettingsIcon, Package, QrCode } from "lucide-react";
+import { Bell, Settings as SettingsIcon, Package, QrCode, Check, CreditCard } from "lucide-react";
 import { Link } from "react-router-dom";
 import { DeliveryDialog } from "@/components/admin/DeliveryDialog";
 import { useToast } from "@/hooks/use-toast";
@@ -255,6 +255,31 @@ export default function Orders() {
                     >
                       <Package className="h-3.5 w-3.5" />
                       Entrega
+                    </Button>
+                  </div>
+
+                  {/* Botão para marcar/desmarcar como pago */}
+                  <div className="pt-1">
+                    <Button
+                      type="button"
+                      variant={order.paid ? "outline" : "default"}
+                      size="sm"
+                      onClick={() => updateOrderPaid(order.id, !order.paid)}
+                      className={`w-full gap-1 ${
+                        order.paid
+                          ? "border-green-600 text-green-700 hover:bg-green-50"
+                          : "bg-amber-500 hover:bg-amber-600 text-white"
+                      }`}
+                    >
+                      {order.paid ? (
+                        <>
+                          <Check className="h-3.5 w-3.5" /> Pago
+                        </>
+                      ) : (
+                        <>
+                          <CreditCard className="h-3.5 w-3.5" /> Marcar como Pago
+                        </>
+                      )}
                     </Button>
                   </div>
                 </div>
