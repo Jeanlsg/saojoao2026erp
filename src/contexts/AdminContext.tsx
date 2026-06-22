@@ -278,38 +278,19 @@ export function AdminProvider({ children }: { children: React.ReactNode }) {
   }, [setCombos]);
 
   const updateOrderStatus = useCallback((id: string, status: Order["status"]) => {
-    // Validação local: não permite ir para 'entregue' ou 'preparando' se não estiver pago
-    const target = orders.find((o) => o.id === id);
-    if (target && (status === "entregue" || status === "preparando") && !target.paid) {
-      toastRef.current({
-        title: "⚠️ Pedido não pago",
-        description: "Marque como 'Pago' antes de mudar para esse status.",
-        variant: "destructive",
-      });
-      return;
-    }
-
+    // Permite mudança livre de status - admin controla tudo
     setOrders((prev) => prev.map((o) => (o.id === id ? { ...o, status } : o)));
     supabase.from("orders").update({ status }).eq("id", id).then(({ error }) => {
       if (error) {
         console.error("[AdminContext] updateOrderStatus:", error.message);
-        // Se for erro de check_violation (trigger do banco), reverte
-        const msg = error.message || "";
-        if (msg.includes("check_violation") || msg.includes("pago antes")) {
-          toastRef.current({
-            title: "⚠️ Pedido não pago",
-            description: "Marque como 'Pago' antes de mudar para esse status.",
-            variant: "destructive",
-          });
-          // Recarrega para reverter o estado otimista
-          supabase.from("orders").select("*").eq("id", id).single().then(({ data }) => {
-            if (data) setOrders((prev) => prev.map((o) => (o.id === id ? mapOrder(data) : o)));
-          });
-        }
+        toastRef.current({
+          title: "Erro",
+          description: error.message,
+          variant: "destructive",
+        });
       }
     });
-  }, [orders]);
-  updateOrderStatusRef.current = updateOrderStatus;
+  }, []);
 
   const updateOrderPaid = useCallback((id: string, paid: boolean) => {
     setOrders((prev) => prev.map((o) => (o.id === id ? { ...o, paid, paidAt: paid ? new Date().toISOString() : undefined } : o)));

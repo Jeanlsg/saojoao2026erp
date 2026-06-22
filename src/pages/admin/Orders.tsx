@@ -236,11 +236,11 @@ export default function Orders() {
                       <SelectContent>
                         <SelectItem value="pendente">Pendente</SelectItem>
                         <SelectItem value="confirmado">Confirmado</SelectItem>
-                        <SelectItem value="preparando" disabled={!order.paid}>
-                          Preparando{!order.paid && " (precisa estar pago)"}
+                        <SelectItem value="preparando">
+                          Preparando
                         </SelectItem>
-                        <SelectItem value="entregue" disabled={!order.paid}>
-                          Entregue{!order.paid && " (precisa estar pago)"}
+                        <SelectItem value="entregue">
+                          Entregue
                         </SelectItem>
                         <SelectItem value="cancelado">Cancelado</SelectItem>
                       </SelectContent>
@@ -251,7 +251,6 @@ export default function Orders() {
                       size="sm"
                       onClick={() => handleOpenDelivery(order.id)}
                       className="bg-green-600 hover:bg-green-700 text-white gap-1"
-                      disabled={!order.paid}
                     >
                       <Package className="h-3.5 w-3.5" />
                       Entrega
