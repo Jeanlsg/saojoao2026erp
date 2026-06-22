@@ -155,10 +155,15 @@ export default function Orders() {
                 >
                   <div className="flex items-start justify-between">
                     <div>
-                      <div className="flex items-center gap-2">
+                      <div className="flex items-center gap-2 flex-wrap">
                         <code className="text-[10px] bg-muted px-1.5 py-0.5 rounded font-mono">
                           #{order.id.slice(0, 6).toUpperCase()}
                         </code>
+                        {(order as any).tableNumber && (
+                          <Badge variant="secondary" className="text-[10px] gap-1 bg-blue-100 dark:bg-blue-900/30 text-blue-700 dark:text-blue-300">
+                            🍽️ Mesa {(order as any).tableNumber}
+                          </Badge>
+                        )}
                         {(order as any).delivery_code && (
                           <Badge variant="outline" className="font-mono text-[10px] gap-1">
                             <QrCode className="h-2.5 w-2.5" />

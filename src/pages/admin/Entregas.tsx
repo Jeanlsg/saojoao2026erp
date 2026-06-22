@@ -258,9 +258,14 @@ export default function Entregas() {
               <CardHeader className="pb-2">
                 <div className="flex items-center justify-between">
                   <div>
-                    <CardTitle className="text-lg flex items-center gap-2">
+                    <CardTitle className="text-lg flex items-center gap-2 flex-wrap">
                       <User className="h-4 w-4" />
                       {order.customer_name}
+                      {order.table_number && (
+                        <Badge variant="secondary" className="bg-blue-100 dark:bg-blue-900/30 text-blue-700 dark:text-blue-300 text-sm">
+                          🍽️ Mesa {order.table_number}
+                        </Badge>
+                      )}
                     </CardTitle>
                     <CardDescription className="flex items-center gap-2">
                       <span className="font-mono text-xs">

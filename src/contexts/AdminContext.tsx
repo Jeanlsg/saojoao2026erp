@@ -32,6 +32,12 @@ interface Order {
   userId?: string;
   paid: boolean;
   paidAt?: string;
+  tableNumber?: string;
+  deliveryCode?: string;
+  deliveryStatus?: string;
+  deliveredBy?: string;
+  deliveredAt?: string;
+  deliveredItems?: any[];
 }
 
 interface AdminContextType {
@@ -111,6 +117,12 @@ export function AdminProvider({ children }: { children: React.ReactNode }) {
     userId: o.user_id,
     paid: o.paid ?? false,
     paidAt: o.paid_at,
+    tableNumber: o.table_number,
+    deliveryCode: o.delivery_code,
+    deliveryStatus: o.delivery_status,
+    deliveredBy: o.delivered_by,
+    deliveredAt: o.delivered_at,
+    deliveredItems: o.delivered_items,
   });
 
   const subscribeRealtime = useCallback(() => {

@@ -17,6 +17,7 @@ import {
   Check,
   User,
   X,
+  Utensils,
   CreditCard,
 } from "lucide-react";
 
@@ -33,6 +34,7 @@ export default function PDV() {
   const [cart, setCart] = useState<CartItem[]>([]);
   const [selectedCategory, setSelectedCategory] = useState<string>("all");
   const [customerName, setCustomerName] = useState("");
+  const [tableNumber, setTableNumber] = useState("");
   const [pixDialogOpen, setPixDialogOpen] = useState(false);
   const [currentOrderId, setCurrentOrderId] = useState<string | null>(null);
   const [paymentMethod, setPaymentMethod] = useState<"pix" | "dinheiro" | "credito" | "debito" | null>(null);
@@ -89,6 +91,7 @@ export default function PDV() {
   const clearCart = () => {
     setCart([]);
     setCustomerName("");
+    setTableNumber("");
     setPaymentMethod(null);
     setChangeAmount("");
     setLastSale(null);
@@ -119,22 +122,30 @@ export default function PDV() {
     // Gera código de entrega
     const deliveryCode = generateDeliveryCode();
 
+    // Monta orderData com colunas opcionais
+    const orderData: any = {
+      id: orderId,
+      customer_name: customerName || "Balcão",
+      customer_phone: null,
+      items,
+      total,
+      status: "confirmado",
+      payment_method: "dinheiro",
+      paid: true,
+      paid_at: new Date().toISOString(),
+      delivery_code: deliveryCode,
+      delivery_status: "pending",
+    };
+
+    // Adiciona table_number se existir
     try {
-      const { data: orderData, error: orderError } = await supabase
+      orderData.table_number = tableNumber.trim() || null;
+    } catch {}
+
+    try {
+      const { data: orderDataResult, error: orderError } = await supabase
         .from("orders")
-        .insert({
-          id: orderId,
-          customer_name: customerName || "Balcão",
-          customer_phone: null,
-          items,
-          total,
-          status: "confirmado",
-          payment_method: "dinheiro",
-          paid: true,
-          paid_at: new Date().toISOString(),
-          delivery_code: deliveryCode,
-          delivery_status: "pending",
-        })
+        .insert(orderData)
         .select()
         .single();
 
@@ -169,22 +180,30 @@ export default function PDV() {
     // Gera código de entrega
     const deliveryCode = generateDeliveryCode();
 
+    // Monta orderData com colunas opcionais
+    const orderData: any = {
+      id: orderId,
+      customer_name: customerName || "Balcão",
+      customer_phone: null,
+      items,
+      total,
+      status: method === "pix" ? "confirmado" : "pendente",
+      payment_method: method,
+      paid: method === "pix",
+      paid_at: method === "pix" ? new Date().toISOString() : null,
+      delivery_code: deliveryCode,
+      delivery_status: "pending",
+    };
+
+    // Adiciona table_number se existir
     try {
-      const { data: orderData, error: orderError } = await supabase
+      orderData.table_number = tableNumber.trim() || null;
+    } catch {}
+
+    try {
+      const { data: orderDataResult, error: orderError } = await supabase
         .from("orders")
-        .insert({
-          id: orderId,
-          customer_name: customerName || "Balcão",
-          customer_phone: null,
-          items,
-          total,
-          status: method === "pix" ? "confirmado" : "pendente",
-          payment_method: method,
-          paid: method === "pix",
-          paid_at: method === "pix" ? new Date().toISOString() : null,
-          delivery_code: deliveryCode,
-          delivery_status: "pending",
-        })
+        .insert(orderData)
         .select()
         .single();
 
@@ -194,7 +213,7 @@ export default function PDV() {
         return;
       }
 
-      setCurrentOrderId(orderData.id);
+      setCurrentOrderId(orderDataResult.id);
 
       if (method === "pix") {
         setPixDialogOpen(true);
@@ -231,19 +250,26 @@ export default function PDV() {
     const orderId = crypto.randomUUID();
 
     try {
-      const { data: orderData, error: orderError } = await supabase
+      const orderData: any = {
+        id: orderId,
+        customer_name: customerName || "Balcão",
+        customer_phone: null,
+        items,
+        total,
+        status: "confirmado",
+        payment_method: cardType,
+        paid: true,
+        paid_at: new Date().toISOString(),
+      };
+
+      // Adiciona table_number se existir
+      try {
+        orderData.table_number = tableNumber.trim() || null;
+      } catch {}
+
+      const { data: orderDataResult, error: orderError } = await supabase
         .from("orders")
-        .insert({
-          id: orderId,
-          customer_name: customerName || "Balcão",
-          customer_phone: null,
-          items,
-          total,
-          status: "confirmado",
-          payment_method: cardType,
-          paid: true,
-          paid_at: new Date().toISOString(),
-        })
+        .insert(orderData)
         .select()
         .single();
 
@@ -257,6 +283,7 @@ export default function PDV() {
       setShowCardModal(false);
       setCart([]);
       setCustomerName("");
+      setTableNumber("");
       setPaymentMethod(null);
     } catch (err: any) {
       console.error("[PDV] Erro ao finalizar venda:", err);
@@ -397,14 +424,26 @@ export default function PDV() {
           )}
         </div>
 
-        {/* Nome do Cliente */}
-        <div className="p-3 border-b border-border">
+        {/* Nome do Cliente + Mesa */}
+        <div className="p-3 border-b border-border space-y-2">
           <div className="flex items-center gap-2">
             <User className="h-4 w-4 text-muted-foreground" />
             <Input
               placeholder="Nome do cliente (opcional)"
               value={customerName}
               onChange={(e) => setCustomerName(e.target.value)}
+              className="text-sm"
+            />
+          </div>
+          <div className="flex items-center gap-2">
+            <Utensils className="h-4 w-4 text-muted-foreground" />
+            <Input
+              type="number"
+              min="1"
+              max="999"
+              placeholder="Nº da mesa (opcional)"
+              value={tableNumber}
+              onChange={(e) => setTableNumber(e.target.value)}
               className="text-sm"
             />
           </div>
