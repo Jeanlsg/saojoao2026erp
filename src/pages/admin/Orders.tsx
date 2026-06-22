@@ -40,7 +40,7 @@ interface DeliveryOrder {
 }
 
 export default function Orders() {
-  const { orders, updateOrderStatus, setOnNewOrder } = useAdmin();
+  const { orders, updateOrderStatus, updateOrderPaid, setOnNewOrder } = useAdmin();
   const { toast } = useToast();
   const [newOrderIds, setNewOrderIds] = useState<Set<string>>(new Set());
   const [deliveryDialogOpen, setDeliveryDialogOpen] = useState(false);
