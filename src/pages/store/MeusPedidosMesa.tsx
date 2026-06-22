@@ -6,6 +6,7 @@ import { Button } from "@/components/ui/button";
 import { Clock, Check, CheckCircle2, Package, ChefHat, Users, MapPin } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
 import { getMesaSession } from "@/lib/mesaSession";
+import { getOrderQueuePosition } from "@/lib/queuePosition";
 import { toast } from "@/hooks/use-toast";
 import { haptOk, haptErr } from "@/lib/haptics";
 
@@ -111,19 +112,7 @@ export default function MeusPedidosMesa() {
 
   // Calcula a posição na fila de atendimento para um pedido
   // Considera apenas pedidos pendentes (não entregues) ordenados por created_at ASC
-  const getQueuePosition = (orderId: string): { position: number; total: number } | null => {
-    const pendingOrders = orders
-      .filter((o) => o.status !== "entregue" && o.status !== "cancelado")
-      .sort((a, b) => new Date(a.created_at).getTime() - new Date(b.created_at).getTime());
-
-    const index = pendingOrders.findIndex((o) => o.id === orderId);
-    if (index === -1) return null;
-
-    return {
-      position: index + 1,
-      total: pendingOrders.length,
-    };
-  };
+  const getQueuePosition = (orderId: string) => getOrderQueuePosition(orderId, orders);
 
   const getDeliveredItems = (order: Order): string[] => {
     if (!order.delivered_items) return [];

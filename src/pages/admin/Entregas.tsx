@@ -3,6 +3,7 @@ import { useNavigate } from "react-router-dom";
 import { supabase } from "@/integrations/supabase/client";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
+import { getOrderQueuePosition } from "@/lib/queuePosition";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
 import {
@@ -54,6 +55,27 @@ export default function Entregas() {
   useEffect(() => {
     checkAccess();
   }, []);
+
+  // Realtime: atualiza quando há mudanças nos pedidos
+  useEffect(() => {
+    if (!isAdminUser) return;
+
+    const channel = supabase
+      .channel("entregas-realtime")
+      .on(
+        "postgres_changes",
+        { event: "*", schema: "public", table: "orders" },
+        (payload) => {
+          console.log("[Entregas] Mudança detectada:", payload.eventType);
+          fetchOrders();
+        }
+      )
+      .subscribe();
+
+    return () => {
+      supabase.removeChannel(channel);
+    };
+  }, [isAdminUser]);
 
   const checkAccess = async () => {
     if (!authUser) {
@@ -253,21 +275,35 @@ export default function Entregas() {
             </CardContent>
           </Card>
         ) : (
-          filteredOrders.map((order) => (
-            <Card key={order.id} className={order.status === "entregue" ? "opacity-75" : ""}>
+          filteredOrders.map((order) => {
+            const queuePos = getOrderQueuePosition(order.id, orders);
+            const isDelivered = order.status === "entregue";
+            return (
+            <Card key={order.id} className={isDelivered ? "opacity-75" : ""}>
               <CardHeader className="pb-2">
-                <div className="flex items-center justify-between">
-                  <div>
-                    <CardTitle className="text-lg flex items-center gap-2 flex-wrap">
-                      <User className="h-4 w-4" />
-                      {order.customer_name}
-                      {order.table_number && (
-                        <Badge variant="secondary" className="bg-blue-100 dark:bg-blue-900/30 text-blue-700 dark:text-blue-300 text-sm">
-                          🍽️ Mesa {order.table_number}
+                <div className="flex items-start justify-between">
+                  <div className="flex-1">
+                    <div className="flex items-center gap-2 flex-wrap">
+                      <CardTitle className="text-lg flex items-center gap-2 flex-wrap">
+                        <User className="h-4 w-4" />
+                        {order.customer_name}
+                        {order.table_number && (
+                          <Badge variant="secondary" className="bg-blue-100 dark:bg-blue-900/30 text-blue-700 dark:text-blue-300 text-sm">
+                            🍽️ Mesa {order.table_number}
+                          </Badge>
+                        )}
+                      </CardTitle>
+                      {queuePos && !isDelivered && (
+                        <Badge
+                          variant="default"
+                          className="bg-blue-500 hover:bg-blue-600 text-white text-base font-bold"
+                          title={`Posição na fila: ${queuePos.position} de ${queuePos.total}`}
+                        >
+                          #{queuePos.position} na fila
                         </Badge>
                       )}
-                    </CardTitle>
-                    <CardDescription className="flex items-center gap-2">
+                    </div>
+                    <CardDescription className="flex items-center gap-2 mt-1">
                       <span className="font-mono text-xs">
                         #{order.id.slice(0, 8).toUpperCase()}
                       </span>
@@ -350,7 +386,8 @@ export default function Entregas() {
                 )}
               </CardContent>
             </Card>
-          ))
+            );
+          })
         )}
       </main>
     </div>
