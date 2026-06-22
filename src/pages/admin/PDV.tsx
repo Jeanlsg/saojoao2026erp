@@ -472,19 +472,46 @@ export default function PDV() {
             </span>
           </div>
 
+          {/* Campo de valor recebido para dinheiro */}
           {paymentMethod === "dinheiro" && (
-            <div className="space-y-2 p-3 bg-muted rounded-lg">
-              <label className="text-sm font-medium">Valor recebido</label>
+            <div className="space-y-2 p-3 bg-amber-50 dark:bg-amber-950/30 border border-amber-200 dark:border-amber-800 rounded-lg">
+              <div className="flex items-center gap-2">
+                <Banknote className="h-4 w-4 text-amber-600" />
+                <label className="text-sm font-medium">Valor recebido</label>
+              </div>
               <Input
                 type="number"
                 placeholder="R$ 0,00"
                 value={changeAmount}
                 onChange={(e) => setChangeAmount(e.target.value)}
                 className="text-lg font-bold"
+                autoFocus
               />
+              <div className="grid grid-cols-3 gap-1">
+                {[10, 20, 50, 100, 200].map((v) => (
+                  <Button
+                    key={v}
+                    type="button"
+                    variant="outline"
+                    size="sm"
+                    onClick={() => setChangeAmount(String(v))}
+                    className="text-xs h-7"
+                  >
+                    R$ {v}
+                  </Button>
+                ))}
+              </div>
               {parseFloat(changeAmount) >= total && (
-                <p className="text-sm text-green-600 font-medium">
-                  Troco: R$ {getChange().toFixed(2).replace(".", ",")}
+                <div className="bg-green-100 dark:bg-green-950/40 border border-green-300 dark:border-green-700 rounded-lg p-2 text-center">
+                  <p className="text-xs text-green-700 dark:text-green-300">Troco</p>
+                  <p className="text-2xl font-bold text-green-700 dark:text-green-300">
+                    R$ {getChange().toFixed(2).replace(".", ",")}
+                  </p>
+                </div>
+              )}
+              {parseFloat(changeAmount) > 0 && parseFloat(changeAmount) < total && (
+                <p className="text-xs text-red-600 text-center">
+                  Faltam R$ {(total - parseFloat(changeAmount)).toFixed(2).replace(".", ",")}
                 </p>
               )}
             </div>
@@ -493,7 +520,7 @@ export default function PDV() {
           <div className="grid grid-cols-2 gap-2">
             <Button
               variant="outline"
-              className="gap-1"
+              className={`gap-1 ${paymentMethod === "pix" ? "border-primary bg-primary/5" : ""}`}
               onClick={() => handleCobrar("pix")}
               disabled={cart.length === 0}
             >
@@ -502,7 +529,7 @@ export default function PDV() {
             </Button>
             <Button
               variant="outline"
-              className="gap-1"
+              className={`gap-1 ${paymentMethod === "dinheiro" ? "border-amber-500 bg-amber-50 dark:bg-amber-950/30" : ""}`}
               onClick={() => handleCobrar("dinheiro")}
               disabled={cart.length === 0}
             >
@@ -514,7 +541,7 @@ export default function PDV() {
           <div className="grid grid-cols-2 gap-2">
             <Button
               variant="secondary"
-              className="gap-1"
+              className={`gap-1 ${paymentMethod === "credito" ? "ring-2 ring-primary" : ""}`}
               onClick={() => handleCobrar("credito")}
               disabled={cart.length === 0}
             >
@@ -523,7 +550,7 @@ export default function PDV() {
             </Button>
             <Button
               variant="secondary"
-              className="gap-1"
+              className={`gap-1 ${paymentMethod === "debito" ? "ring-2 ring-primary" : ""}`}
               onClick={() => handleCobrar("debito")}
               disabled={cart.length === 0}
             >
