@@ -374,13 +374,9 @@ export default function Orders() {
                         <SelectTrigger className="h-11 text-xs"><SelectValue /></SelectTrigger>
                         <SelectContent>
                           <SelectItem value="pendente">Pendente</SelectItem>
-                          <SelectItem value="confirmado">Confirmado</SelectItem>
-                          <SelectItem value="preparando" disabled={!order.paid}>
-                            Preparando{!order.paid && " (pago)"}
-                          </SelectItem>
-                          <SelectItem value="entregue" disabled={!order.paid}>
-                            Entregue{!order.paid && " (pago)"}
-                          </SelectItem>
+                          <SelectItem value="confirmado">Pago</SelectItem>
+                          <SelectItem value="preparando">Preparando</SelectItem>
+                          <SelectItem value="entregue">Entregue</SelectItem>
                           <SelectItem value="cancelado">Cancelado</SelectItem>
                         </SelectContent>
                       </Select>
@@ -391,8 +387,7 @@ export default function Orders() {
                         size="sm"
                         onClick={() => handleOpenDelivery(order.id)}
                         title="Gerenciar Entrega"
-                        className={!isFullyDelivered && order.paid ? "bg-green-600 hover:bg-green-700 text-white" : ""}
-                        disabled={!order.paid}
+                        className={!isFullyDelivered ? "bg-green-600 hover:bg-green-700 text-white" : ""}
                       >
                         <Package className="h-4 w-4 mr-1" />
                         Entrega
